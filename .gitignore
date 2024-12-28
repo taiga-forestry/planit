@@ -17,3 +17,6 @@ dist/
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+#
+src/routeTree.gen.ts
