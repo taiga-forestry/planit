@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+  font-size: 62.5%; /* for accessibility -- this is 10px by default */
+}
+
+@layer utilities {
+  .row {
+    display: flex;
+    flex-direction: row;
+  }
+  .l-column {
+    display: flex;
+    flex-direction: column;
+  }
+  .c-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .r-column {
+    display: flex;
+    flex-direction: column;
+    align-items: right;
+  }
+  .grid {
+    display: grid;
+  }
+}
