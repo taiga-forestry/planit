@@ -14,6 +14,7 @@ export function PlaceQuerier({ map, onPlaceSelect }: Props) {
   const [placeAutocomplete, setPlaceAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null);
 
+  // initialize the autocomplete querier on load
   useEffect(() => {
     const options = {
       bounds: map?.getBounds(),
@@ -39,6 +40,7 @@ export function PlaceQuerier({ map, onPlaceSelect }: Props) {
     }
   }, [places, map]);
 
+  // when new place is selected, load details from place API into state
   useEffect(() => {
     if (!placeAutocomplete) return;
 

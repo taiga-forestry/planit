@@ -8,38 +8,26 @@ import {
 import { PlaceQuerier } from "./PlaceQuerier";
 import { useQuery } from "@tanstack/react-query";
 import { MapBoxPlace } from "./types";
-import { invariant, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { googlePlacesKeyQueryPairs } from "../../api/google/queries";
 
 interface MapBoxProps {
-  googleMapsAPIKey: string;
-  googleMapsMapID: string;
   initialPlaceID: string | undefined;
 }
 
 interface MapBoxComponentProps {
-  googleMapsMapID: string;
   initialPlaceID: string | undefined;
 }
 
-export function MapBox({
-  googleMapsAPIKey,
-  googleMapsMapID,
-  initialPlaceID,
-}: MapBoxProps) {
+export function MapBox({ initialPlaceID }: MapBoxProps) {
   return (
-    <APIProvider apiKey={googleMapsAPIKey}>
-      <MapBoxComponent
-        googleMapsMapID={googleMapsMapID}
-        initialPlaceID={initialPlaceID}
-      />
+    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <MapBoxComponent initialPlaceID={initialPlaceID} />
     </APIProvider>
   );
 }
 
-function MapBoxComponent({
-  initialPlaceID,
-  googleMapsMapID,
-}: MapBoxComponentProps) {
+function MapBoxComponent({ initialPlaceID }: MapBoxComponentProps) {
   const map = useMap();
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const [selectedPlace, setSelectedPlace] = useState<MapBoxPlace | null>(null);
@@ -48,40 +36,17 @@ function MapBoxComponent({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["google.maps.PlacesLibrary"], // FIXME: abstract this out somewhere?
+    queryKey: googlePlacesKeyQueryPairs.getPlaceByPlaceID.key(
+      initialPlaceID || "",
+    ),
     queryFn: async () => {
       if (!initialPlaceID) {
         return null;
       }
 
-      const { Place } = (await google.maps.importLibrary(
-        "places",
-      )) as google.maps.PlacesLibrary;
-      const place = new Place({ id: initialPlaceID });
-
-      await place.fetchFields({
-        fields: ["displayName", "formattedAddress", "location"],
-      });
-
-      const id = place.id;
-      const lat = place.location?.lat();
-      const lng = place.location?.lng();
-      const name = place.displayName;
-      const address = place.formattedAddress;
-      const rating = place.rating;
-      const num_ratings = place.userRatingCount;
-      invariant(lat, "lat must have a value");
-      invariant(lng, "lng must have a value");
-
-      return {
-        id,
-        name,
-        address,
-        lat,
-        lng,
-        rating,
-        num_ratings,
-      };
+      return await googlePlacesKeyQueryPairs.getPlaceByPlaceID.query(
+        initialPlaceID,
+      );
     },
   });
 
@@ -111,9 +76,9 @@ function MapBoxComponent({
     alert(error); // FIXME: impl real error page
   }
 
-  const center = initialPlace
+  const initialCenter = initialPlace
     ? { lat: initialPlace.lat, lng: initialPlace.lng }
-    : { lat: 40.735, lng: -73.96 }; // FIXME: how to generate this center?
+    : { lat: 40.735, lng: -73.96 }; // FIXME: how to generate this default center?
 
   // when user selects a new place, adjust URL placeID search param
   const onPlaceSelect = (place: MapBoxPlace) => {
@@ -125,9 +90,9 @@ function MapBoxComponent({
     <>
       <PlaceQuerier map={map} onPlaceSelect={onPlaceSelect} />
       <Map
-        mapId={googleMapsMapID}
+        mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID}
         style={{ width: "100%", height: "100%" }}
-        defaultCenter={center}
+        defaultCenter={initialCenter}
         defaultZoom={initialPlace ? 17 : 13}
         gestureHandling={"greedy"}
         disableDefaultUI={true}
@@ -135,8 +100,17 @@ function MapBoxComponent({
       {selectedPlace && (
         <AdvancedMarker
           position={{ lat: selectedPlace.lat, lng: selectedPlace.lng }}
+          clickable={true}
         >
-          <div className="bg-white border border-black rounded-lg p-24">
+          <div className="bg-white border border-black rounded-lg p-24 relative">
+            <button
+              className="top-6 right-6 z-50 absolute"
+              onClick={() => setSelectedPlace(null)}
+            >
+              <Link to={window.location.pathname} className="text-16 z-20">
+                X
+              </Link>
+            </button>
             <p className="text-16">{selectedPlace.name}</p>
             <p className="text-14 font-light">{selectedPlace.address}</p>
 

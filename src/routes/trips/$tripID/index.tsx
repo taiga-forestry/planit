@@ -12,9 +12,6 @@ export const Route = createFileRoute("/trips/$tripID/")({
   loaderDeps: ({ search: { placeID } }) => ({ placeID }),
   loader: async ({ params }) => {
     const email = await getAuthorizedUserEmail();
-    const googleMapsAPIKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    const googleMapsMapID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID;
-
     const tripID = params.tripID;
     const [user, trip] = await Promise.all([
       usersKeyQueryPairs.getUserByEmail.query(email),
@@ -22,14 +19,13 @@ export const Route = createFileRoute("/trips/$tripID/")({
     ]);
 
     // FIXME: get trip name
-    return { user, trip, googleMapsAPIKey, googleMapsMapID };
+    return { user, trip };
   },
 });
 
 function TripComponent() {
   const { placeID } = Route.useSearch();
-  const { user, trip, googleMapsAPIKey, googleMapsMapID } =
-    Route.useLoaderData();
+  const { user, trip } = Route.useLoaderData();
 
   // FIXME: user city / initial lat,lng
   return (
@@ -43,11 +39,7 @@ function TripComponent() {
       </nav>
 
       <div className="relative h-full">
-        <MapBox
-          googleMapsAPIKey={googleMapsAPIKey}
-          googleMapsMapID={googleMapsMapID}
-          initialPlaceID={placeID}
-        />
+        <MapBox initialPlaceID={placeID} />
       </div>
     </div>
   );
