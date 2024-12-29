@@ -10,7 +10,8 @@
     "serve": "vite preview",
     "start": "vite",
     "lint": "eslint src --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "supabase-gen-types": "npx supabase gen types typescript --project-id kexlvpjbowcztzokqvlj --schema public > src/database/supabase.types.ts && yarn lint"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",
