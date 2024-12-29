@@ -1,10 +1,10 @@
-# Local
+# local
 .DS_Store
 *.local
 *.log*
 .env*
 
-# Dist
+# dist
 node_modules
 dist/
 .vinxi
@@ -18,5 +18,5 @@ dist/
 !.vscode/extensions.json
 .idea
 
-#
+# Tanstack
 src/routeTree.gen.ts
