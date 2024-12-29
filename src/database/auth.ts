@@ -12,7 +12,6 @@ export const getAuthorizedUserEmail = async () => {
   }
 
   const email = session?.user?.email;
-  const x = 1;
 
   if (!email) {
     throw redirect({ to: "/" }); // search: { redirect: location.href }
