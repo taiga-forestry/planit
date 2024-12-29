@@ -1,4 +1,4 @@
-import supabaseClient from "../../../database/client";
+import supabaseClient from "../../database/client";
 
 const getUserByEmail = async (email: string) => {
   const { data: user, error } = await supabaseClient

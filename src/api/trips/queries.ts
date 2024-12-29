@@ -1,4 +1,4 @@
-import supabaseClient from "../../../database/client";
+import supabaseClient from "../../database/client";
 
 const getTripByTripID = async (tripID: string) => {
   const { data: trip, error } = await supabaseClient
