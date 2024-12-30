@@ -1,16 +1,15 @@
 import { useRef, useEffect, useState } from "react";
-import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 
 interface Props {
   map: google.maps.Map | null;
+  places: google.maps.PlacesLibrary | null;
   onPlaceSelect: (place: MapBoxPlace) => void;
 }
 
-export function PlaceQuerier({ map, onPlaceSelect }: Props) {
+export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const places = useMapsLibrary("places");
   const [placeAutocomplete, setPlaceAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null);
 
