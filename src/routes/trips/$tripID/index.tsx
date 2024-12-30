@@ -19,7 +19,6 @@ export const Route = createFileRoute("/trips/$tripID/")({
     ]);
 
     // FIXME: make sure trip is under this user id lol
-    // FIXME: get trip name
     return { user, trip };
   },
 });
