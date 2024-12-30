@@ -52,7 +52,7 @@ export function PlaceQuerier({ map, onPlaceSelect }: Props) {
       const lat = place.geometry?.location?.lat();
       const lng = place.geometry?.location?.lng();
       const rating = place.rating;
-      const num_ratings = place.user_ratings_total;
+      const numRatings = place.user_ratings_total;
       invariant(id, "placeID must have a value");
       invariant(lat, "lat must have a value");
       invariant(lng, "lng must have a value");
@@ -64,7 +64,7 @@ export function PlaceQuerier({ map, onPlaceSelect }: Props) {
         lat,
         lng,
         rating,
-        num_ratings,
+        numRatings,
       });
     });
   }, [onPlaceSelect, placeAutocomplete]);

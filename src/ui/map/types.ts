@@ -5,5 +5,5 @@ export type MapBoxPlace = {
   name: string | null | undefined;
   address: string | null | undefined;
   rating: number | null | undefined;
-  num_ratings: number | null | undefined;
+  numRatings: number | null | undefined;
 };
