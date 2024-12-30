@@ -1,4 +1,6 @@
-import { redirect } from "@tanstack/react-router";
+import { invariant, redirect } from "@tanstack/react-router";
+import { usersKeyQueryPairs } from "../api/users/queries";
+import { createUser } from "../api/users/mutations";
 import supabaseClient from "./client";
 
 export const handleSignIn = async () => {
@@ -37,11 +39,19 @@ export const getAuthorizedUser = async () => {
   }
 
   const email = user.email;
-  const name = user.user_metadata.name;
 
   if (!email) {
     throw redirect({ to: "/login", search: { redirect: location.href } });
   }
 
-  return { email, name };
+  // FIXME: need a better solution to avoid calling db each time session is checked
+  try {
+    return await usersKeyQueryPairs.getUserByEmail.query(email);
+  } catch {
+    const name = user.user_metadata.name;
+    invariant(typeof name === "string");
+
+    const { userID: id } = await createUser({ email, name });
+    return { id, email, name };
+  }
 };
