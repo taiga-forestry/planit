@@ -39,17 +39,15 @@ export const getAuthorizedUser = async () => {
   }
 
   const email = user.email;
-
-  if (!email) {
-    throw redirect({ to: "/login", search: { redirect: location.href } });
-  }
+  invariant(email, "session user must have an email");
 
   // FIXME: need a better solution to avoid calling db each time session is checked
   try {
     return await usersKeyQueryPairs.getUserByEmail.query(email);
   } catch {
+    // if getUserByEmail fails, that means no user exists in db -> register them!
     const name = user.user_metadata.name;
-    invariant(typeof name === "string");
+    invariant(typeof name === "string", "session user must have a name");
 
     const { userID: id } = await createUser({ email, name });
     return { id, email, name };
