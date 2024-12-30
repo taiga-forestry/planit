@@ -111,6 +111,18 @@ function MapBoxComponent({ initialPlaceID }: MapBoxComponentProps) {
         style={{ width: "100%", height: "100%" }}
         defaultCenter={computeDefaultCenter()}
         defaultZoom={13}
+        minZoom={3}
+        maxZoom={21}
+        restriction={{
+          // don't allow users to scroll off the map!
+          strictBounds: true,
+          latLngBounds: {
+            north: 85,
+            south: -85,
+            east: 180,
+            west: -180,
+          },
+        }}
         gestureHandling={"greedy"}
         disableDefaultUI={true}
       />
