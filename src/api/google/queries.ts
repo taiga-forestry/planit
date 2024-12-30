@@ -18,7 +18,7 @@ const getPlaceByPlaceID = async (placeID: string) => {
   const name = place.displayName.text;
   const address = place.formattedAddress;
   const rating = place.rating;
-  const num_ratings = place.userRatingCount;
+  const numRatings = place.userRatingCount;
 
   // FIXME: validate this (with zod?) or smth else lol
   invariant(typeof lat === "number");
@@ -35,7 +35,7 @@ const getPlaceByPlaceID = async (placeID: string) => {
     name,
     address,
     rating,
-    num_ratings,
+    numRatings,
   };
 };
 
