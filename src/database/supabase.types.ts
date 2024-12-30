@@ -9,48 +9,53 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      trip_places: {
+      trips: {
+        Row: {
+          end_date: string;
+          id: string;
+          name: string;
+          start_date: string;
+        };
+        Insert: {
+          end_date: string;
+          id?: string;
+          name: string;
+          start_date: string;
+        };
+        Update: {
+          end_date?: string;
+          id?: string;
+          name?: string;
+          start_date?: string;
+        };
+        Relationships: [];
+      };
+      trips_users: {
         Row: {
           id: number;
-          place_id: string;
           trip_id: string;
+          user_id: string;
         };
         Insert: {
           id?: number;
-          place_id: string;
           trip_id: string;
+          user_id: string;
         };
         Update: {
           id?: number;
-          place_id?: string;
           trip_id?: string;
+          user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "trip_places_trip_id_fkey";
+            foreignKeyName: "trips_users_trip_id_fkey";
             columns: ["trip_id"];
             isOneToOne: false;
             referencedRelation: "trips";
             referencedColumns: ["id"];
           },
-        ];
-      };
-      trips: {
-        Row: {
-          id: string;
-          user_id: string;
-        };
-        Insert: {
-          id?: string;
-          user_id?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-        };
-        Relationships: [
           {
-            foreignKeyName: "trips_user_id_fkey";
+            foreignKeyName: "trips_users_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -62,14 +67,17 @@ export type Database = {
         Row: {
           email: string;
           id: string;
+          name: string;
         };
         Insert: {
           email: string;
           id?: string;
+          name: string;
         };
         Update: {
           email?: string;
           id?: string;
+          name?: string;
         };
         Relationships: [];
       };
