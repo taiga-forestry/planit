@@ -14,10 +14,27 @@ const getTripByTripID = async (tripID: string) => {
   return trip;
 };
 
+const getTripsByUserID = async (userID: string) => {
+  const { data, error } = await supabaseClient
+    .from("trips_users")
+    .select("trips!inner(*)")
+    .eq("user_id", userID);
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? data.map(({ trips }) => trips) : [];
+};
+
 export const tripsKeyQueryPairs = {
   _base: ["trips"] as const,
   getTripByTripID: {
     key: (tripID: string) => [...tripsKeyQueryPairs._base, tripID],
     query: getTripByTripID,
+  },
+  getTripsByUserID: {
+    key: (userID: string) => [...tripsKeyQueryPairs._base, userID],
+    query: getTripsByUserID,
   },
 } as const;
