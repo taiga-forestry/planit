@@ -7,7 +7,10 @@ export const Route = createFileRoute("/_home/")({
 function HomeComponent() {
   return (
     <>
-      <Link to="/login"> Go to Login </Link>
+      <h1 className="text-24"> Home Page </h1>
+      <button className="p-12 text-16 bg-gray-200 hover:opacity-80">
+        <Link to="/login"> Go to Login </Link>
+      </button>
     </>
   );
 }
