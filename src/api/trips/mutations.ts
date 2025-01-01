@@ -42,6 +42,24 @@ export const createTrip = async (
   return { tripID };
 };
 
+export const createPlaceForTrip = async (
+  tripID: string,
+  fields: { placeID: string; date: string; time: string },
+) => {
+  const { error } = await supabaseClient.from("trips_places").insert({
+    trip_id: tripID,
+    place_id: fields.placeID,
+    date: fields.date,
+    time: fields.time,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  // FIXME: auto revalidate the query?
+};
+
 // export const updateTrip = async (tripID, fields: { name, dates }) => {
 // };
 

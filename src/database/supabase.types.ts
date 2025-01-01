@@ -30,6 +30,38 @@ export type Database = {
         };
         Relationships: [];
       };
+      trips_places: {
+        Row: {
+          date: string;
+          id: number;
+          place_id: string;
+          time: string;
+          trip_id: string;
+        };
+        Insert: {
+          date: string;
+          id?: number;
+          place_id: string;
+          time: string;
+          trip_id: string;
+        };
+        Update: {
+          date?: string;
+          id?: number;
+          place_id?: string;
+          time?: string;
+          trip_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trips_stops_trip_id_fkey";
+            columns: ["trip_id"];
+            isOneToOne: false;
+            referencedRelation: "trips";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trips_users: {
         Row: {
           id: number;
