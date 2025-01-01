@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  AdvancedMarker,
   APIProvider,
   Map,
   useMap,
@@ -8,80 +7,75 @@ import {
 } from "@vis.gl/react-google-maps";
 import { PlaceQuerier } from "./PlaceQuerier";
 import { MapBoxPlace } from "./types";
-import { invariant, Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { getPlaceByPlaceID } from "./util";
+import { PlaceInfoWindow } from "./PlaceInfoWindow";
+import { MapMarker } from "./MapMarker";
+import { createPlaceForTrip } from "../../api/trips/mutations";
+import { useQueryClient } from "@tanstack/react-query";
+import { tripsKeyQueryPairs } from "../../api/trips/queries";
 
-interface MapBoxProps {
+interface Props {
+  tripID: string;
   initialPlaceID: string | undefined;
+  markedPlaceIDs: string[]; // FIXME: rename?
 }
 
-interface MapBoxComponentProps {
-  initialPlaceID: string | undefined;
-}
-
-export function MapBox({ initialPlaceID }: MapBoxProps) {
+export function MapBox({ tripID, initialPlaceID, markedPlaceIDs }: Props) {
   return (
     <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-      <MapBoxComponent initialPlaceID={initialPlaceID} />
+      <MapBoxComponent
+        tripID={tripID}
+        initialPlaceID={initialPlaceID}
+        markedPlaceIDs={markedPlaceIDs}
+      />
     </APIProvider>
   );
 }
 
-function MapBoxComponent({ initialPlaceID }: MapBoxComponentProps) {
+function MapBoxComponent({ tripID, initialPlaceID, markedPlaceIDs }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
+  const queryClient = useQueryClient();
   const map = useMap();
   const places = useMapsLibrary("places");
   const [selectedPlace, setSelectedPlace] = useState<MapBoxPlace | null>(null);
-  const [placeService, setPlaceService] =
+  const [markedPlaces, setMarkedPlaces] = useState<MapBoxPlace[] | null>(null);
+  const [placesService, setPlacesService] =
     useState<google.maps.places.PlacesService | null>(null);
 
   // initialize the PlacesService on load
   useEffect(() => {
     if (places && map) {
-      setPlaceService(new places.PlacesService(map));
+      setPlacesService(new places.PlacesService(map));
     }
   }, [places, map]);
 
   // if given an initialPlaceID, find relevant info w/ the PlacesService
   useEffect(() => {
-    if (initialPlaceID && placeService) {
-      placeService.getDetails(
-        {
-          placeId: initialPlaceID,
-          fields: [
-            "name",
-            "formatted_address",
-            "geometry",
-            "rating",
-            "user_ratings_total",
-          ],
-        },
-        (place) => {
-          if (place) {
-            const id = initialPlaceID;
-            const lat = place.geometry?.location?.lat();
-            const lng = place.geometry?.location?.lng();
-            const name = place.name;
-            const address = place.formatted_address;
-            const rating = place.rating;
-            const numRatings = place.user_ratings_total;
-            invariant(lat && lng, "place must have a latitude, longitude");
-
-            setSelectedPlace({
-              id,
-              lat,
-              lng,
-              name,
-              address,
-              rating,
-              numRatings,
-            });
-          }
-        },
-      );
+    if (initialPlaceID && placesService) {
+      getPlaceByPlaceID(placesService, initialPlaceID, setSelectedPlace);
     }
-  }, [initialPlaceID, placeService]); // Effect runs only when initialPlaceID changes
+  }, [initialPlaceID, placesService]); // Effect runs only when initialPlaceID changes
 
-  // every time user selects a new place, adjust map bounds to keep it in frame
+  // when map loads, add all marked places to the map
+  useEffect(() => {
+    if (placesService) {
+      markedPlaceIDs
+        // only process placeIDs NOT ALREADY IN markedPlaces state...
+        .filter(
+          (placeID) =>
+            !markedPlaces?.find((place) => place.placeID === placeID),
+        )
+        // then get place info for these remaining placeIDs to add to markedPlaces
+        .forEach((placeID) => {
+          getPlaceByPlaceID(placesService, placeID, (place) => {
+            setMarkedPlaces((places) => [...(places || []), place]);
+          });
+        });
+    }
+  }, [markedPlaceIDs, markedPlaces, placesService]);
+
+  // every time user selects a new place, adjust map bounds to keep user in frame
   useEffect(() => {
     if (map && selectedPlace) {
       const { lat, lng } = selectedPlace;
@@ -94,10 +88,20 @@ function MapBoxComponent({ initialPlaceID }: MapBoxComponentProps) {
 
   // when user selects a new place, adjust URL placeID search param
   const onPlaceSelect = (place: MapBoxPlace) => {
-    navigate({ search: { placeID: place.id } }); // FIXME: include name, lat, lng?
+    navigate({ search: { placeID: place.placeID } }); // FIXME: include name, lat, lng?
     setSelectedPlace(place);
   };
 
+  // when user closes window/otherwise unselects place, adjust URL + state
+  const onPlaceUnselect = () => {
+    navigate({
+      to: window.location.pathname,
+      search: { placeID: undefined },
+    });
+    setSelectedPlace(null);
+  };
+
+  // FIXME: abstract out closing = navigate + set to null
   const computeDefaultCenter = () => {
     // FIXME: compute this based on trip, i.e. starting in NY, LA, etc...
     return { lat: 40.735, lng: -73.96 };
@@ -125,29 +129,48 @@ function MapBoxComponent({ initialPlaceID }: MapBoxComponentProps) {
         }}
         gestureHandling={"greedy"}
         disableDefaultUI={true}
-      />
-      {selectedPlace && (
-        <AdvancedMarker
-          position={{ lat: selectedPlace.lat, lng: selectedPlace.lng }}
-          clickable={true}
-        >
-          <div className="bg-white border border-black rounded-lg p-24 relative">
-            <button
-              className="top-6 right-6 z-50 absolute"
-              onClick={() => setSelectedPlace(null)}
-            >
-              <Link to={window.location.pathname} className="text-16 z-20">
-                X
-              </Link>
-            </button>
-            <p className="text-16">{selectedPlace.name}</p>
-            <p className="text-14 font-light">{selectedPlace.address}</p>
+        clickableIcons={false}
+      >
+        {selectedPlace && (
+          <PlaceInfoWindow
+            place={selectedPlace}
+            onClose={onPlaceUnselect}
+            isSaveEnabled={
+              !markedPlaces?.find(
+                ({ placeID }) => placeID === selectedPlace.placeID,
+              )
+            }
+            onSave={async () => {
+              await createPlaceForTrip(tripID, {
+                placeID: selectedPlace.placeID,
+                date: "2025-01-01",
+                time: "01:02:03",
+              });
 
-            {/* FIXME: include photo, link to maps, price? */}
-            {/* <p> {selectedPlace?.price_level} </p> */}
-          </div>
-        </AdvancedMarker>
-      )}
+              queryClient.invalidateQueries({
+                queryKey: tripsKeyQueryPairs.getPlacesByTripID.key(tripID),
+              });
+
+              // auto close info window after saving!
+              onPlaceUnselect();
+            }}
+          />
+        )}
+
+        {markedPlaces?.map(({ placeID, lat, lng }) => (
+          <MapMarker
+            key={placeID}
+            lat={lat}
+            lng={lng}
+            onClick={() => {
+              // FIXME: once hotspots is determined, can probably avoid network call here
+              if (placesService) {
+                getPlaceByPlaceID(placesService, placeID, onPlaceSelect);
+              }
+            }}
+          />
+        ))}
+      </Map>
     </>
   );
 }

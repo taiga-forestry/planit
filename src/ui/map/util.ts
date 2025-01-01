@@ -2,11 +2,12 @@ import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 
 export const getPlaceByPlaceID = (
-  placeService: google.maps.places.PlacesService,
+  placesService: google.maps.places.PlacesService,
   placeID: string,
   callback: (place: MapBoxPlace) => void,
 ) => {
-  placeService.getDetails(
+  // FIXME: can we cache w/ placeID
+  placesService.getDetails(
     {
       placeId: placeID,
       fields: [

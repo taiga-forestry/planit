@@ -3,6 +3,7 @@ import { usersKeyQueryPairs } from "../../../api/users/queries";
 import { getAuthorizedUser } from "../../../database/auth";
 import { MapBox } from "../../../ui/map/MapBox";
 import { tripsKeyQueryPairs } from "../../../api/trips/queries";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/trips/$tripID/")({
   component: TripComponent,
@@ -26,6 +27,22 @@ export const Route = createFileRoute("/trips/$tripID/")({
 function TripComponent() {
   const { placeID } = Route.useSearch();
   const { user, trip } = Route.useLoaderData();
+  const {
+    data: places,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: tripsKeyQueryPairs.getPlacesByTripID.key(trip.id),
+    queryFn: () => tripsKeyQueryPairs.getPlacesByTripID.query(trip.id),
+  });
+
+  if (isLoading) {
+    return <div> loading... </div>; // FIXME: blah blah
+  }
+
+  if (error) {
+    throw error; // FIXME: blah
+  }
 
   // FIXME: user city / initial lat,lng
   return (
@@ -36,7 +53,11 @@ function TripComponent() {
       </nav>
 
       <div className="relative h-full">
-        <MapBox initialPlaceID={placeID} />
+        <MapBox
+          tripID={trip.id}
+          initialPlaceID={placeID}
+          markedPlaceIDs={places?.map(({ place_id }) => place_id) || []}
+        />
       </div>
     </div>
   );
