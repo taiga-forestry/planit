@@ -45,19 +45,19 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
 
     placeAutocomplete.addListener("place_changed", () => {
       const place = placeAutocomplete.getPlace();
-      const id = place.place_id;
+      const placeID = place.place_id;
       const name = place.name;
       const address = place.formatted_address;
       const lat = place.geometry?.location?.lat();
       const lng = place.geometry?.location?.lng();
       const rating = place.rating;
       const numRatings = place.user_ratings_total;
-      invariant(id, "placeID must have a value");
+      invariant(placeID, "placeID must have a value");
       invariant(lat, "lat must have a value");
       invariant(lng, "lng must have a value");
 
       onPlaceSelect({
-        id,
+        placeID,
         name,
         address,
         lat,

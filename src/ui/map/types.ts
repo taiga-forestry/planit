@@ -1,5 +1,5 @@
 export type MapBoxPlace = {
-  id: string;
+  placeID: string;
   lat: number;
   lng: number;
   name: string | null | undefined;
