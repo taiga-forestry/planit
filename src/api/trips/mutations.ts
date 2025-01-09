@@ -47,7 +47,6 @@ export const createTrip = async (
   return { tripID };
 };
 
-// FIXME: allow specification for duration/end
 export const createStopForTrip = async (
   tripID: string,
   fields: { placeID: string; title: string; start: string; end: string },
