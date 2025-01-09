@@ -6,3 +6,5 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabaseClient = createClient<Database>(supabaseUrl, supabaseKey);
 
 export default supabaseClient;
+
+// FIXME: add uniqueness to all rows in table where needed (does upsert work?)

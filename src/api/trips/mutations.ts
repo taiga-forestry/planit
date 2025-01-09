@@ -55,7 +55,7 @@ export const createStopForTrip = async (
   const { date: start_date, time: start_time } = extractDateTime(fields.start);
   const { date: end_date, time: end_time } = extractDateTime(fields.end);
 
-  const { error } = await supabaseClient.from("trips_stops").upsert({
+  const { error } = await supabaseClient.from("trips_stops").insert({
     trip_id: tripID,
     place_id: fields.placeID,
     title: fields.title,
@@ -74,8 +74,6 @@ export const createStopForTrip = async (
       queryKey: tripsKeyQueryPairs.getStopsByTripID.key(tripID),
     });
   }
-
-  // FIXME: auto revalidate the query?
 };
 
 // export const updateTrip = async (tripID, fields: { name, dates }) => {
