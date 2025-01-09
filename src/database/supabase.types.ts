@@ -30,26 +30,35 @@ export type Database = {
         };
         Relationships: [];
       };
-      trips_places: {
+      trips_stops: {
         Row: {
-          date: string;
+          end_date: string;
+          end_time: string;
           id: number;
           place_id: string;
-          time: string;
+          start_date: string;
+          start_time: string;
+          title: string;
           trip_id: string;
         };
         Insert: {
-          date: string;
+          end_date: string;
+          end_time: string;
           id?: number;
           place_id: string;
-          time: string;
+          start_date: string;
+          start_time: string;
+          title: string;
           trip_id: string;
         };
         Update: {
-          date?: string;
+          end_date?: string;
+          end_time?: string;
           id?: number;
           place_id?: string;
-          time?: string;
+          start_date?: string;
+          start_time?: string;
+          title?: string;
           trip_id?: string;
         };
         Relationships: [
