@@ -122,6 +122,32 @@ export type Database = {
         };
         Relationships: [];
       };
+      users_favorites: {
+        Row: {
+          id: number;
+          place_id: string;
+          user_id: string;
+        };
+        Insert: {
+          id?: number;
+          place_id: string;
+          user_id: string;
+        };
+        Update: {
+          id?: number;
+          place_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "users_favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
