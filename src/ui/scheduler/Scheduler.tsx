@@ -18,6 +18,7 @@ import {
   roundMinutes,
 } from "./util";
 import { MapBoxPlace } from "../map/types";
+import { AnimatePresence, motion } from "framer-motion";
 import "@schedule-x/theme-default/dist/index.css";
 import "./styles.css";
 
@@ -60,33 +61,43 @@ export function Scheduler({
         setSelectedDate(date);
       },
       onEventClick: ({ id, placeID, title, start, end }) => {
-        setSelectedEvent({
-          id: id.toString(),
-          placeID, // FIXME: test placeID can be extracted
-          title: title || "",
-          start,
-          end,
-        });
+        setSelectedEvent(null);
+
+        setTimeout(() => {
+          setSelectedEvent({
+            id: id.toString(),
+            placeID, // FIXME: test placeID can be extracted
+            title: title || "",
+            start,
+            end,
+          });
+        }, 200);
       },
       onClickDateTime: (datetime) => {
-        // FIXME: change id gen to uuid?
-        const eventID = Math.floor(Math.random() * 10000).toString();
-        const start = roundMinutes(datetime, DEFAULT_MIN_TIME_INCREMENT);
-        const end = incrementDateTime(
-          start,
-          DEFAULT_HOURS_DURATION,
-          DEFAULT_MINUTES_DURATION,
-        );
+        setSelectedEvent(null);
 
-        const newEvent = {
-          id: eventID,
-          placeID: "", // FIXME: compute
-          title: "Untitled Event",
-          start,
-          end,
-        };
+        // Introduce a slight delay to ensure React processes the intermediate state
+        setTimeout(() => {
+          // Generate a new event
+          const eventID = Math.floor(Math.random() * 10000).toString();
+          const start = roundMinutes(datetime, DEFAULT_MIN_TIME_INCREMENT);
+          const end = incrementDateTime(
+            start,
+            DEFAULT_HOURS_DURATION,
+            DEFAULT_MINUTES_DURATION,
+          );
 
-        setSelectedEvent(newEvent);
+          const newEvent = {
+            id: eventID,
+            placeID: "", // FIXME: compute
+            title: "Untitled Event",
+            start,
+            end,
+          };
+
+          // Set the new event
+          setSelectedEvent(newEvent);
+        }, 200); // Minimal delay
       },
       // onBeforeEventUpdate: (e1, e2, app) => {
       // return true;
@@ -104,63 +115,76 @@ export function Scheduler({
       </button>
 
       {/* FIXME: modal positioning */}
-      {selectedEvent && (
-        <div className="absolute z-60 top-[30%] left-[25%]">
-          <EventPopup
-            favoritePlaces={favoritePlaces}
-            event={selectedEvent}
-            setEvent={setSelectedEvent}
-            onSave={async () => {
-              try {
-                await createStopForTrip(
-                  tripID,
-                  selectedEvent.id,
-                  {
-                    placeID: selectedEvent.placeID,
-                    title: selectedEvent.title,
-                    start: selectedEvent.start,
-                    end: selectedEvent.end,
-                  },
-                  queryClient,
-                );
+      <AnimatePresence>
+        {selectedEvent && (
+          <motion.div
+            className="absolute z-60 top-[30%] left-[25%]"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{
+              duration: 0.2,
+              ease: "easeOut",
+            }}
+          >
+            <EventPopup
+              favoritePlaces={favoritePlaces}
+              event={selectedEvent}
+              setEvent={setSelectedEvent}
+              onSave={async () => {
+                try {
+                  await createStopForTrip(
+                    tripID,
+                    selectedEvent.id,
+                    {
+                      placeID: selectedEvent.placeID,
+                      title: selectedEvent.title,
+                      start: selectedEvent.start,
+                      end: selectedEvent.end,
+                    },
+                    queryClient,
+                  );
 
+                  const existingIds = calendar.events
+                    .getAll()
+                    .map(({ id }) => id);
+
+                  if (existingIds.includes(selectedEvent.id)) {
+                    calendar.events.remove(selectedEvent.id);
+                  }
+
+                  calendar.events.add({ ...selectedEvent });
+                  setSelectedEvent(null);
+                } catch (e: unknown) {
+                  alert(e);
+                }
+              }}
+              onDelete={async () => {
+                // FIXME: disable this button if its a new event?
                 const existingIds = calendar.events
                   .getAll()
                   .map(({ id }) => id);
 
                 if (existingIds.includes(selectedEvent.id)) {
-                  calendar.events.remove(selectedEvent.id);
+                  try {
+                    await deleteStopForTrip(
+                      tripID,
+                      selectedEvent.id,
+                      queryClient,
+                    );
+                    calendar.events.remove(selectedEvent.id);
+                  } catch (e: unknown) {
+                    alert(e);
+                  }
                 }
 
-                calendar.events.add({ ...selectedEvent });
                 setSelectedEvent(null);
-              } catch (e: unknown) {
-                alert(e);
-              }
-            }}
-            onDelete={async () => {
-              // FIXME: disable this button if its a new event?
-              const existingIds = calendar.events.getAll().map(({ id }) => id);
-
-              if (existingIds.includes(selectedEvent.id)) {
-                try {
-                  await deleteStopForTrip(
-                    tripID,
-                    selectedEvent.id,
-                    queryClient,
-                  );
-                  calendar.events.remove(selectedEvent.id);
-                } catch (e: unknown) {
-                  alert(e);
-                }
-              }
-
-              setSelectedEvent(null);
-            }}
-            onClose={() => setSelectedEvent(null)}
-          />
-        </div>
-      )}
+              }}
+              onClose={() => setSelectedEvent(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
