@@ -39,8 +39,8 @@ const getStopsByTripID = async (tripID: string) => {
 
   return data.map((stop) => ({
     ...stop,
-    start_time: stop.start_time.substring(0, 5),
-    end_time: stop.end_time.substring(0, 5), // FIXME: refactor
+    start_time: stop.start_time.substring(0, 5), // convert HH:mm:ss -> HH:mm
+    end_time: stop.end_time.substring(0, 5),
   }));
 };
 
