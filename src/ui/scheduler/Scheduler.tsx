@@ -159,7 +159,7 @@ export function Scheduler({
                   calendar.events.add({ ...selectedEvent });
                   setSelectedEvent(null);
                 } catch (e) {
-                  console.log(e);
+                  console.log(e); // FIXME: handle all of these properly!
                 }
               }}
               onDelete={async () => {

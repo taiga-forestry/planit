@@ -64,9 +64,8 @@ export function EventPopup({
             setEvent(newEvent);
           }}
         >
-          {/* only show empty option if no event has been selected */}
-          {/* otherwise, show current option as first in the list */}
           {currentPlace ? (
+            // if event has been selected, show current option as first in the list
             <option
               key={currentPlace.placeID}
               value={JSON.stringify(currentPlace)}
@@ -74,6 +73,7 @@ export function EventPopup({
               {currentPlace.name}
             </option>
           ) : (
+            // otherwise, only show empty option
             <option key="" value="" />
           )}
 

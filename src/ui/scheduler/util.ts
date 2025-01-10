@@ -1,14 +1,21 @@
+import { invariant } from "@tanstack/react-router";
+
 export const DEFAULT_MIN_TIME_INCREMENT = 30;
 export const DEFAULT_HOURS_DURATION = 1;
 export const DEFAULT_MINUTES_DURATION = 0;
 
+// FIXME: sanitize all inputs here prob
 export const extractDateTime = (datetime: string) => {
   const [date, time] = datetime.split(" ");
   return { date, time };
 };
 
 export const extractHoursMinutes = (time: string) => {
-  const [hours, minutes] = time.split(":").map((v) => parseInt(v));
+  const [hours, minutes] = time.split(":").map((v) => {
+    const result = parseInt(v);
+    invariant(!isNaN(result), `Invalid number: "${result}"`);
+    return result;
+  });
   return { hours, minutes };
 };
 
