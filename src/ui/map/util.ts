@@ -1,12 +1,18 @@
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 
+// FIXME: use more durable caching (local storage, etc.)
+const cache: Record<string, MapBoxPlace> = {};
+
 export const getPlaceByPlaceID = (
   placesService: google.maps.places.PlacesService,
   placeID: string,
   callback: (place: MapBoxPlace) => void,
 ) => {
-  // FIXME: can we cache w/ placeID
+  if (cache[placeID]) {
+    return callback(cache[placeID]);
+  }
+
   placesService.getDetails(
     {
       placeId: placeID,
@@ -27,7 +33,8 @@ export const getPlaceByPlaceID = (
         const rating = place.rating;
         const numRatings = place.user_ratings_total;
         invariant(lat && lng, "place must have a latitude, longitude");
-        callback({
+
+        const placeObject = {
           placeID,
           lat,
           lng,
@@ -35,7 +42,9 @@ export const getPlaceByPlaceID = (
           address,
           rating,
           numRatings,
-        });
+        };
+        cache[placeID] = placeObject;
+        callback(placeObject);
       }
     },
   );
