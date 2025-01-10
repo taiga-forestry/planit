@@ -140,9 +140,10 @@ export function MapBox({
           />
         )}
 
+        {/* FIXME: add options to filter markedPlaces (i.e. only today) */}
         {markedPlaces?.map(({ placeID, lat, lng }) => (
           <MapMarker
-            key={placeID}
+            key={`MapMarker: ${placeID}`}
             lat={lat}
             lng={lng}
             onClick={() => {
