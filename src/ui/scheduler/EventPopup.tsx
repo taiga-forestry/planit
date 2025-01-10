@@ -44,7 +44,7 @@ export function EventPopup({
       <div className="l-column gap-8">
         <select
           className="border border-black p-4"
-          value={currentPlace?.placeID || ""}
+          defaultValue={currentPlace?.placeID || ""}
           onChange={(e) => {
             // if no place selected, use defaults
             const place = JSON.parse(e.target.value) || {
