@@ -68,7 +68,7 @@ function TripComponent() {
     }
   }, [places, map]);
 
-  // load details for all favorited places
+  // load details for all favorited places (FIXME: extract this pattern into util)
   useEffect(() => {
     if (placesService) {
       const newFavoritePlaces: MapBoxPlace[] = [];
@@ -114,7 +114,10 @@ function TripComponent() {
           userID={user.id}
           tripID={trip.id}
           initialPlaceID={placeID}
-          markedPlaceIDs={stops?.map(({ place_id }) => place_id) || []}
+          markedPlaceIDs={[
+            // don't mark the same place multiple times
+            ...new Set(stops?.map(({ place_id }) => place_id)),
+          ]}
           favoritePlaceIDs={favorites?.map(({ place_id }) => place_id) || []}
         />
       </div>
