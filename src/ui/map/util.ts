@@ -1,16 +1,23 @@
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 
-// FIXME: use more durable caching (local storage, etc.)
-const cache: Record<string, MapBoxPlace> = {};
+// FIXME: validate cache on put/get, set size limit on cache
+const cache = {
+  get: (key: string) => localStorage.getItem(key),
+  put: (key: string, value: MapBoxPlace) =>
+    localStorage.setItem(key, JSON.stringify(value)),
+  del: (key: string) => localStorage.removeItem(key),
+};
 
 export const getPlaceByPlaceID = (
   placesService: google.maps.places.PlacesService,
   placeID: string,
   callback: (place: MapBoxPlace) => void,
 ) => {
-  if (cache[placeID]) {
-    return callback(cache[placeID]);
+  const cachedPlace = cache.get(placeID);
+
+  if (cachedPlace) {
+    return callback(JSON.parse(cachedPlace));
   }
 
   placesService.getDetails(
@@ -43,7 +50,8 @@ export const getPlaceByPlaceID = (
           rating,
           numRatings,
         };
-        cache[placeID] = placeObject;
+
+        cache.put(placeID, placeObject);
         callback(placeObject);
       }
     },
