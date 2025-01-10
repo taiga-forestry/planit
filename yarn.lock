@@ -884,6 +884,11 @@
   resolved "https://registry.yarnpkg.com/@schedule-x/theme-default/-/theme-default-2.12.1.tgz#3896b0a751afa9141147798cca64e395519a2bb1"
   integrity sha512-Z2pr9spKysV9GFGOLYXnUxLGme8aH5Z01VzMJQkTFYu16FCLOwQUovL1KGi1+8QQbDgATUdzZLxBPemsYb4f8Q==
 
+"@schedule-x/theme-shadcn@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@schedule-x/theme-shadcn/-/theme-shadcn-2.13.0.tgz#d7c88c1f3e0bd1e816b3719eed44b028934bd2e0"
+  integrity sha512-zzeL9HOVFIi2hDGM6uu9xJXPBeqtbz8AI4jCI92x/fIxBtO0eR5TUnxk5QD6kHRWSU3NBU/RFw7/ZCB9tK8eSg==
+
 "@supabase/auth-js@2.67.3":
   version "2.67.3"
   resolved "https://registry.yarnpkg.com/@supabase/auth-js/-/auth-js-2.67.3.tgz#a1f5eb22440b0cdbf87fe2ecae662a8dd8bb2028"

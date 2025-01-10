@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
 }
 
+// FIXME: allow closing with escape key
 export function EventPopup({
   favoritePlaces,
   event,
@@ -30,9 +31,12 @@ export function EventPopup({
 }: Props) {
   const { date: startDate, time: startTime } = extractDateTime(event.start);
   const duration = findDuration(event.start, event.end);
+  const currentPlace = favoritePlaces.find(
+    (place) => place.placeID === event.placeID,
+  );
 
   return (
-    <div className="text-16 bg-white border border-black p-36 rounded relative">
+    <div className="w-[250px] text-16 bg-white border border-black p-36 rounded relative">
       <button className="text-20 p-12 absolute top-0 right-0" onClick={onClose}>
         X
       </button>
@@ -40,6 +44,7 @@ export function EventPopup({
       <div className="l-column gap-8">
         <select
           className="border border-black p-4"
+          value={currentPlace?.placeID || ""}
           onChange={(e) => {
             // if no place selected, use defaults
             const place = JSON.parse(e.target.value) || {
@@ -60,16 +65,22 @@ export function EventPopup({
           }}
         >
           {/* only show empty option if no event has been selected */}
-          {event.placeID || <option />}
-
           {/* otherwise, show current option as first in the list */}
+          {currentPlace ? (
+            <option
+              key={currentPlace.placeID}
+              value={JSON.stringify(currentPlace)}
+            >
+              {currentPlace.name}
+            </option>
+          ) : (
+            <option key="" value="" />
+          )}
+
           {favoritePlaces
+            .filter((place) => place.placeID !== event.placeID)
             .sort((a, b) =>
-              a.placeID === event.placeID
-                ? -1
-                : b.placeID === event.placeID
-                  ? 1
-                  : 0,
+              (a.name || "").toLocaleLowerCase().localeCompare(b.name || ""),
             )
             .map((place) => (
               <option key={place.placeID} value={JSON.stringify(place)}>
@@ -81,7 +92,7 @@ export function EventPopup({
         <input
           type="time"
           className="border border-black p-4"
-          value={startTime}
+          defaultValue={startTime}
           onChange={(e) => {
             const start = roundMinutes(
               `${startDate} ${e.target.value}`, // FIXME: put join in util
@@ -130,7 +141,7 @@ export function EventPopup({
           Save
         </button>
 
-        <button onClick={onDelete}> Delete Event </button>
+        {currentPlace && <button onClick={onDelete}>Delete Event</button>}
       </div>
     </div>
   );

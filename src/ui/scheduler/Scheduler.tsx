@@ -20,6 +20,7 @@ import {
 import { MapBoxPlace } from "../map/types";
 import { AnimatePresence, motion } from "framer-motion";
 import "@schedule-x/theme-default/dist/index.css";
+import "@schedule-x/theme-shadcn/dist/index.css";
 import "./styles.css";
 
 interface Props {
@@ -46,16 +47,17 @@ export function Scheduler({
     selectedDate, // e.g. "2023-12-24"
     minDate: startDate,
     maxDate: endDate,
-    // dayBoundaries: {
-    //   start: "06:00", // FIXME: configure?
-    //   end: "24:00",
-    // },
+    dayBoundaries: {
+      start: "06:00", // FIXME: configure?
+      end: "24:00",
+    },
     views: [createViewDay()],
     events,
     plugins: [
       createEventsServicePlugin(),
       createDragAndDropPlugin(DEFAULT_MIN_TIME_INCREMENT),
     ],
+    // theme: "shadcn",
     callbacks: {
       onSelectedDateUpdate: (date) => {
         setSelectedDate(date);
@@ -128,6 +130,7 @@ export function Scheduler({
             }}
           >
             <EventPopup
+              key={`EventPopup: ${selectedEvent.id}`} // force remount to reset internal state
               favoritePlaces={favoritePlaces}
               event={selectedEvent}
               setEvent={setSelectedEvent}
@@ -155,12 +158,11 @@ export function Scheduler({
 
                   calendar.events.add({ ...selectedEvent });
                   setSelectedEvent(null);
-                } catch (e: unknown) {
-                  alert(e);
+                } catch (e) {
+                  console.log(e);
                 }
               }}
               onDelete={async () => {
-                // FIXME: disable this button if its a new event?
                 const existingIds = calendar.events
                   .getAll()
                   .map(({ id }) => id);
@@ -173,8 +175,8 @@ export function Scheduler({
                       queryClient,
                     );
                     calendar.events.remove(selectedEvent.id);
-                  } catch (e: unknown) {
-                    alert(e);
+                  } catch (e) {
+                    console.log(e);
                   }
                 }
 
