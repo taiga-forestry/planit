@@ -7,7 +7,7 @@ import { MapBoxPlace } from "./types";
 
 interface Props {
   place: MapBoxPlace;
-  isSaveEnabled: boolean; // FIXME: rename
+  isSaveEnabled: boolean;
   onSave: () => void;
   onClose: () => void;
 }
@@ -32,10 +32,10 @@ export function PlaceInfoWindow({
 
         {isSaveEnabled ? (
           <button className="text-14" onClick={onSave}>
-            Save to Trip
+            Add to favorites
           </button>
         ) : (
-          <p> Trip already contains this place. </p> // FIXME: how to handle visit same place >1 times?
+          <p> Saved! </p>
         )}
 
         {/* FIXME: include photo, link to maps, price? */}
