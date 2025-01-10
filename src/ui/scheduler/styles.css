@@ -1,0 +1,56 @@
+:root {
+  /* --sx-week-grid-hour-height: 4.8rem; */
+  /* --sx-font-size: 1.2rem; */
+}
+
+.sx-react-calendar-wrapper {
+  height: 100vh;
+  /* font-family: 'Courier New', Courier, monospace !important; */
+}
+
+/* size of hours on the side */
+.sx__week-grid__hour-text, .sx__week-grid__date--is-today {
+  font-size: 1.2rem;
+}
+
+/* size of colored events */
+.sx__time-grid-event-title, .sx__time-grid-event-time {
+  font-size: 1.2rem;
+}
+
+/* text above calendar saying day, number (e.g. Wed, 12) */
+.sx__week-grid__day-name, .sx__week-grid__date-number {
+  font-size: 1.2rem;
+  /* display: none; */
+}
+
+/* date picker on top right */
+.sx__date-input {
+  font-size: 1.6rem !important;
+}
+
+/* the small "date" words on top of the date picker */
+.sx__date-input-label {
+  /* display: none; */
+}
+
+/* displays month, year on top left (e.g. March 2025) */
+.sx__range-heading {
+  display: none;
+}
+
+/* the mini calendar to change currently selected date */
+.sx__date-picker-popup {
+  padding: 1.2rem !important;
+  overflow: hidden;
+}
+
+/* size of numbered days, month/year label on mini calendar */
+.sx__date-picker__day, .sx__date-picker__month-view-header__month-year {
+  font-size: 1.6rem !important;
+}
+
+.sx__date-picker__day--today {
+  /* FIXME -- figure out this coloring */
+  /* background-color: rgba(255, 255, 255) !important; */
+}
