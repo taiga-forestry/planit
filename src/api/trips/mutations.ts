@@ -18,7 +18,7 @@ export const createTrip = async (
 ) => {
   const { data, error: tripCreationError } = await supabaseClient
     .from("trips")
-    .insert({
+    .upsert({
       name: fields.name,
       start_date: fields.startDate,
       end_date: fields.endDate,
@@ -35,7 +35,7 @@ export const createTrip = async (
 
   const { error: tripAssignmentError } = await supabaseClient
     .from("trips_users")
-    .insert({
+    .upsert({
       trip_id: tripID,
       user_id: userID,
     });
@@ -49,13 +49,14 @@ export const createTrip = async (
 
 export const createStopForTrip = async (
   tripID: string,
+  stopID: string,
   fields: { placeID: string; title: string; start: string; end: string },
   queryClient?: QueryClient,
 ) => {
   const { date: start_date, time: start_time } = extractDateTime(fields.start);
   const { date: end_date, time: end_time } = extractDateTime(fields.end);
-
-  const { error } = await supabaseClient.from("trips_stops").insert({
+  const { error } = await supabaseClient.from("trips_stops").upsert({
+    id: parseInt(stopID),
     trip_id: tripID,
     place_id: fields.placeID,
     title: fields.title,
@@ -64,6 +65,27 @@ export const createStopForTrip = async (
     end_date,
     end_time,
   });
+
+  if (error) {
+    throw error;
+  }
+
+  if (queryClient) {
+    queryClient.invalidateQueries({
+      queryKey: tripsKeyQueryPairs.getStopsByTripID.key(tripID),
+    });
+  }
+};
+
+export const deleteStopForTrip = async (
+  tripID: string,
+  stopID: string,
+  queryClient?: QueryClient,
+) => {
+  const { error } = await supabaseClient
+    .from("trips_stops")
+    .delete()
+    .eq("id", parseInt(stopID));
 
   if (error) {
     throw error;

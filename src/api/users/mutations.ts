@@ -6,7 +6,7 @@ import { usersKeyQueryPairs } from "./queries";
 export const createUser = async (fields: { name: string; email: string }) => {
   const { data, error } = await supabaseClient
     .from("users")
-    .insert([
+    .upsert([
       {
         name: fields.name,
         email: fields.email,
@@ -37,7 +37,7 @@ export const createFavoriteForUser = async (
   fields: { placeID: string },
   queryClient?: QueryClient,
 ) => {
-  const { error } = await supabaseClient.from("users_favorites").insert({
+  const { error } = await supabaseClient.from("users_favorites").upsert({
     user_id: userID,
     place_id: fields.placeID,
   });
