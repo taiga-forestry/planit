@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Map } from "@vis.gl/react-google-maps";
 import { PlaceQuerier } from "./PlaceQuerier";
 import { MapBoxPlace } from "./types";
-import { useNavigate } from "@tanstack/react-router";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { getPlaceByPlaceID } from "./util";
 import { PlaceInfoWindow } from "./PlaceInfoWindow";
 import { MapMarker } from "./MapMarker";
@@ -15,9 +15,8 @@ interface Props {
   placesService: google.maps.places.PlacesService | null;
   userID: string;
   tripID: string;
-  initialPlaceID: string | undefined;
-  markedPlaceIDs: string[];
-  favoritePlaceIDs: string[];
+  favoritePlaces: MapBoxPlace[];
+  stopPlaces: MapBoxPlace[];
 }
 
 export function MapBox({
@@ -26,42 +25,20 @@ export function MapBox({
   placesService,
   userID,
   // tripID,
-  initialPlaceID,
-  markedPlaceIDs,
-  favoritePlaceIDs,
+  stopPlaces,
+  favoritePlaces,
 }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
+  const searchParams = getRouteApi("/trips/$tripID/").useSearch();
   const queryClient = useQueryClient();
   const [selectedPlace, setSelectedPlace] = useState<MapBoxPlace | null>(null);
-  const [markedPlaces, setMarkedPlaces] = useState<MapBoxPlace[] | null>(null);
 
   // if given an initialPlaceID, find relevant info w/ the PlacesService
   useEffect(() => {
-    if (initialPlaceID && placesService) {
-      getPlaceByPlaceID(placesService, initialPlaceID, setSelectedPlace);
+    if (searchParams.placeID && placesService) {
+      getPlaceByPlaceID(placesService, searchParams.placeID, setSelectedPlace);
     }
-  }, [initialPlaceID, placesService]);
-
-  // when map loads, add all marked places to the map
-  useEffect(() => {
-    if (placesService) {
-      const newMarkedPlaces: MapBoxPlace[] = [];
-
-      if (markedPlaceIDs.length === 0) {
-        return setMarkedPlaces([]);
-      }
-
-      markedPlaceIDs.forEach((placeID) => {
-        getPlaceByPlaceID(placesService, placeID, (place) => {
-          newMarkedPlaces.push(place);
-
-          if (newMarkedPlaces.length === markedPlaceIDs.length) {
-            setMarkedPlaces(newMarkedPlaces);
-          }
-        });
-      });
-    }
-  }, [placesService, markedPlaceIDs]);
+  }, [searchParams.placeID, placesService]);
 
   // every time user selects a new place, adjust map bounds to keep user in frame
   useEffect(() => {
@@ -76,7 +53,12 @@ export function MapBox({
 
   // when user selects a new place, adjust URL placeID search param
   const onPlaceSelect = (place: MapBoxPlace) => {
-    navigate({ search: { placeID: place.placeID } }); // FIXME: include name, lat, lng?
+    navigate({
+      search: {
+        ...searchParams,
+        placeID: place.placeID,
+      },
+    }); // FIXME: include name, lat, lng?
     setSelectedPlace(place);
   };
 
@@ -84,7 +66,7 @@ export function MapBox({
   const onPlaceUnselect = () => {
     navigate({
       to: window.location.pathname,
-      search: { placeID: undefined },
+      search: { ...searchParams, placeID: undefined },
     });
     setSelectedPlace(null);
   };
@@ -92,6 +74,34 @@ export function MapBox({
   const computeDefaultCenter = () => {
     // FIXME: compute this based on trip, i.e. starting in NY, LA, etc...
     return { lat: 40.735, lng: -73.96 };
+  };
+
+  const renderMarkers = (
+    places: MapBoxPlace[],
+    variant: "stop" | "favorite",
+  ) => {
+    return places
+      .filter(({ placeID }) => {
+        // only render favorite marker if no stop marker exists
+        if (variant === "favorite") {
+          return !stopPlaces.some((stop) => stop.placeID === placeID);
+        }
+
+        return true;
+      })
+      .map(({ placeID, lat, lng }) => (
+        <MapMarker
+          key={`${variant} MapMarker: ${placeID}`}
+          lat={lat}
+          lng={lng}
+          variant={variant}
+          onClick={() => {
+            if (placesService) {
+              getPlaceByPlaceID(placesService, placeID, onPlaceSelect);
+            }
+          }}
+        />
+      ));
   };
 
   return (
@@ -123,8 +133,8 @@ export function MapBox({
             place={selectedPlace}
             onClose={onPlaceUnselect}
             isSaveEnabled={
-              !favoritePlaceIDs?.find(
-                (placeID) => placeID === selectedPlace.placeID,
+              !favoritePlaces?.find(
+                ({ placeID }) => placeID === selectedPlace.placeID,
               )
             }
             onSave={async () => {
@@ -141,18 +151,8 @@ export function MapBox({
         )}
 
         {/* FIXME: add options to filter markedPlaces (i.e. only today) */}
-        {markedPlaces?.map(({ placeID, lat, lng }) => (
-          <MapMarker
-            key={`MapMarker: ${placeID}`}
-            lat={lat}
-            lng={lng}
-            onClick={() => {
-              if (placesService) {
-                getPlaceByPlaceID(placesService, placeID, onPlaceSelect);
-              }
-            }}
-          />
-        ))}
+        {renderMarkers(favoritePlaces, "favorite")}
+        {renderMarkers(stopPlaces, "stop")}
       </Map>
     </>
   );

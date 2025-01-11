@@ -18,6 +18,7 @@ export const Route = createFileRoute("/trips/$tripID/")({
   ),
   validateSearch: (search) => ({
     placeID: search.placeID as string | undefined, // FIXME: validate + add initial lat/long for map
+    // selectedDate: search.selectedDate as string | undefined,
   }),
   loaderDeps: ({ search: { placeID } }) => ({ placeID }),
   loader: async ({ params }) => {
@@ -34,7 +35,8 @@ export const Route = createFileRoute("/trips/$tripID/")({
 });
 
 function TripComponent() {
-  const { placeID } = Route.useSearch();
+  // const navigate = useNavigate({ from: "/" });
+  // const searchParams = Route.useSearch();
   const { user, trip } = Route.useLoaderData();
   const [
     { data: stops, isLoading: stopsLoading, error: stopsError },
@@ -52,10 +54,12 @@ function TripComponent() {
     ],
   });
 
-  const [schedulerOpen, setSchedulerOpen] = useState(true);
-  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[] | null>(
-    null,
+  const [schedulerOpen, setSchedulerOpen] = useState(
+    // searchParams.selectedDate !== undefined,
+    true,
   );
+  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
+  const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
   const map = useMap();
   const places = useMapsLibrary("places");
   const [placesService, setPlacesService] =
@@ -68,26 +72,45 @@ function TripComponent() {
     }
   }, [places, map]);
 
-  // load details for all favorited places (FIXME: extract this pattern into util)
+  // useEffect(() => {
+  //   setSchedulerOpen(searchParams.selectedDate !== undefined);
+  // }, [searchParams.selectedDate]);
+
+  // load details for all favorited places (FIXME: extract this pattern into util as hook)
   useEffect(() => {
     if (placesService) {
-      const newFavoritePlaces: MapBoxPlace[] = [];
+      const loadPlaces = (
+        placeIDs: string[],
+        setPlaces: (places: MapBoxPlace[]) => void,
+      ) => {
+        const places: MapBoxPlace[] = [];
 
-      if (!favorites?.length) {
-        return setFavoritePlaces([]);
-      }
+        if (placeIDs.length === 0) {
+          return setFavoritePlaces([]);
+        }
 
-      favorites.forEach(({ place_id }) => {
-        getPlaceByPlaceID(placesService, place_id, (place) => {
-          newFavoritePlaces.push(place);
+        placeIDs.forEach((placeID) => {
+          getPlaceByPlaceID(placesService, placeID, (place) => {
+            places.push(place);
 
-          if (newFavoritePlaces.length === favorites.length) {
-            setFavoritePlaces(newFavoritePlaces);
-          }
+            if (places.length === placeIDs.length) {
+              setPlaces(places);
+            }
+          });
         });
-      });
+      };
+
+      // FIXME: clean this
+      loadPlaces(
+        [...new Set(favorites?.map(({ place_id }) => place_id))],
+        setFavoritePlaces,
+      );
+      loadPlaces(
+        [...new Set(stops?.map(({ place_id }) => place_id))],
+        setStopPlaces,
+      );
     }
-  }, [placesService, favorites]);
+  }, [placesService, favorites, stops]);
 
   if (stopsLoading || favoritesLoading) {
     return <div> loading... </div>; // FIXME: blah blah
@@ -98,12 +121,24 @@ function TripComponent() {
   }
 
   // FIXME: user city / initial lat,lng
-  // FIXME: refactor marked/favorite etc. into this component from MapBox
+  // FIXME: add settings page to change trip details
+  // FIXME: refactor scheduler open/close state into scheduler
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100vh] text-16 font-sans">
       <nav className="row justify-between text-24 p-12">
         <Link to="/profile"> {user.email} </Link>
-        <p onClick={() => setSchedulerOpen(true)}> Trip: {trip.name} </p>
+        <p
+          onClick={() => {
+            setSchedulerOpen(true);
+            // navigate({
+            //   to: "/trips/$tripID",
+            //   params: { tripID: trip.id },
+            //   // search: { ...searchParams, selectedDate: trip.start_date },
+            // });
+          }}
+        >
+          Trip: {trip.name}
+        </p>
       </nav>
 
       <div className="relative w-[100%]">
@@ -113,18 +148,20 @@ function TripComponent() {
           placesService={placesService}
           userID={user.id}
           tripID={trip.id}
-          initialPlaceID={placeID}
-          markedPlaceIDs={[
-            // don't mark the same place multiple times
-            ...new Set(stops?.map(({ place_id }) => place_id)),
-          ]}
-          favoritePlaceIDs={favorites?.map(({ place_id }) => place_id) || []}
+          favoritePlaces={favoritePlaces}
+          stopPlaces={stopPlaces}
+          // stopPlaceIDs={[
+          //   // don't mark the same place multiple times
+          //   ...new Set(stops?.map(({ place_id }) => place_id)),
+          // ]}
+          // favoritePlaceIDs={favorites?.map(({ place_id }) => place_id) || []}
         />
       </div>
 
       <div className="fixed z-50 top-0 right-0">
         {schedulerOpen && (
           <Scheduler
+            // key={searchParams.selectedDate}
             tripID={trip.id}
             favoritePlaces={favoritePlaces || []}
             startDate={trip.start_date}
@@ -138,7 +175,14 @@ function TripComponent() {
                 end: `${stop.end_date} ${stop.end_time}`,
               })) || []
             }
-            onClose={() => setSchedulerOpen(false)}
+            onClose={() => {
+              setSchedulerOpen(false);
+              // navigate({
+              //   to: "/trips/$tripID",
+              //   params: { tripID: trip.id },
+              //   search: { ...searchParams, selectedDate: undefined },
+              // });
+            }}
           />
         )}
       </div>
