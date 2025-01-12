@@ -1,5 +1,5 @@
-import { useState } from "react";
-// import { useNavigate, getRouteApi } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewDay } from "@schedule-x/calendar";
@@ -18,41 +18,43 @@ import {
   DEFAULT_MINUTES_DURATION,
   incrementDateTime,
   roundMinutes,
+  calendarControlsPlugin,
 } from "./util";
 import { MapBoxPlace } from "../map/types";
 import { AnimatePresence, motion } from "framer-motion";
 import "@schedule-x/theme-default/dist/index.css";
 import "@schedule-x/theme-shadcn/dist/index.css";
 import "./styles.css";
-import { createCalendarControlsPlugin } from "@schedule-x/calendar-controls";
 
 interface Props {
-  tripID: string;
   startDate: string;
   endDate: string;
   events: Event[];
   favoritePlaces: MapBoxPlace[];
-  onDateChange: (newDate: string) => void;
-  onClose: () => void;
+  // onDateChange: (newDate: string) => void;
+  // onClose: () => void;
 }
 
 export function Scheduler({
-  tripID,
   startDate,
   endDate,
   events,
   favoritePlaces,
-  onDateChange,
-  onClose,
 }: Props) {
-  // const navigate = useNavigate({ from: "/" });
-  // const searchParams = getRouteApi("/trips/$tripID/").useSearch();
+  const navigate = useNavigate({ from: "/trips/$tripID" });
+  const params = getRouteApi("/trips/$tripID/").useParams();
+  const searchParams = getRouteApi("/trips/$tripID/").useSearch();
   const queryClient = useQueryClient();
-  // const [selectedDate, setSelectedDate] = useState(searchParams.selectedDate);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
+  useEffect(() => {
+    if (searchParams.selectedDate) {
+      calendarControlsPlugin.setDate(searchParams.selectedDate);
+    }
+  }, [searchParams.selectedDate]);
+
   const calendar = useCalendarApp({
-    selectedDate: startDate, // searchParams.selectedDate, // e.g. "2023-12-24"
+    selectedDate: searchParams.selectedDate, // e.g. "2023-12-24"
     minDate: startDate,
     maxDate: endDate,
     dayBoundaries: {
@@ -65,22 +67,17 @@ export function Scheduler({
       createEventsServicePlugin(),
       createDragAndDropPlugin(DEFAULT_MIN_TIME_INCREMENT),
       createResizePlugin(DEFAULT_MIN_TIME_INCREMENT),
-      createCalendarControlsPlugin(),
+      calendarControlsPlugin,
     ],
     // theme: "shadcn",
     callbacks: {
       onSelectedDateUpdate: (date) => {
         setSelectedEvent(null);
-        onDateChange(date);
-
-        // navigate({
-        //   to: "/trips/$tripID",
-        //   params: { tripID },
-        //   search: {
-        //     ...searchParams,
-        //     selectedDate: date,
-        //   },
-        // });
+        navigate({
+          to: "/trips/$tripID",
+          params: { tripID: params.tripID },
+          search: { ...searchParams, selectedDate: date },
+        });
       },
       onEventClick: ({ id, placeID, title, start, end }) => {
         // navigate({
@@ -103,9 +100,7 @@ export function Scheduler({
       onClickDateTime: (datetime) => {
         setSelectedEvent(null);
 
-        // Introduce a slight delay to ensure React processes the intermediate state
         setTimeout(() => {
-          // Generate a new event
           const eventID = Math.floor(Math.random() * 10000).toString();
           const start = roundMinutes(datetime, DEFAULT_MIN_TIME_INCREMENT);
           const end = incrementDateTime(
@@ -122,9 +117,8 @@ export function Scheduler({
             end,
           };
 
-          // Set the new event
           setSelectedEvent(newEvent);
-        }, 200); // Minimal delay
+        }, 200);
       },
       // onBeforeEventUpdate: (e1, e2, app) => {
       // return true;
@@ -132,7 +126,7 @@ export function Scheduler({
       onEventUpdate: async ({ id, placeID, title, start, end }) => {
         // FIXME: clean this up, validate
         await createStopForTrip(
-          tripID,
+          params.tripID,
           id.toString(),
           {
             placeID,
@@ -146,17 +140,20 @@ export function Scheduler({
     },
   });
 
-  // useEffect(() => {
-  //   calendar.$app.calendarState.setView("day", searchParams.selectedDate);
-  //   calendar.$app.datePickerState.inputDisplayedValue.v =
-  //     searchParams.selectedDate;
-  // }, [searchParams.selectedDate]);
-
   return (
     <div className="w-[400px] relative bg-white">
       <ScheduleXCalendar calendarApp={calendar} />
 
-      <button className="absolute top-0 left-0 text-24 p-16" onClick={onClose}>
+      <button
+        className="absolute top-0 left-0 text-24 p-16"
+        onClick={() => {
+          navigate({
+            to: "/trips/$tripID",
+            params: { tripID: params.tripID },
+            search: { ...searchParams, selectedDate: undefined },
+          });
+        }}
+      >
         <i className="fas fa-arrow-right hover:opacity-60 transition" />
       </button>
 
@@ -181,7 +178,7 @@ export function Scheduler({
               onSave={async () => {
                 try {
                   await createStopForTrip(
-                    tripID,
+                    params.tripID,
                     selectedEvent.id,
                     {
                       placeID: selectedEvent.placeID,
@@ -214,17 +211,16 @@ export function Scheduler({
                 if (existingIds.includes(selectedEvent.id)) {
                   try {
                     await deleteStopForTrip(
-                      tripID,
+                      params.tripID,
                       selectedEvent.id,
                       queryClient,
                     );
                     calendar.events.remove(selectedEvent.id);
+                    setSelectedEvent(null);
                   } catch (e) {
                     console.log(e);
                   }
                 }
-
-                setSelectedEvent(null);
               }}
               onClose={() => setSelectedEvent(null)}
             />

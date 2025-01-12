@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { usersKeyQueryPairs } from "../../../api/users/queries";
 import { getAuthorizedUser } from "../../../database/auth";
 import { MapBox } from "../../../ui/map/MapBox";
@@ -9,6 +9,7 @@ import { Scheduler } from "../../../ui/scheduler/Scheduler";
 import { APIProvider, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { getPlaceByPlaceID } from "../../../ui/map/util";
 import { MapBoxPlace } from "../../../ui/map/types";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const Route = createFileRoute("/trips/$tripID/")({
   component: () => (
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/trips/$tripID/")({
   ),
   validateSearch: (search) => ({
     placeID: search.placeID as string | undefined, // FIXME: validate + add initial lat/long for map
+    selectedDate: search.selectedDate as string | undefined,
   }),
   loaderDeps: ({ search: { placeID } }) => ({ placeID }),
   loader: async ({ params }) => {
@@ -34,8 +36,6 @@ export const Route = createFileRoute("/trips/$tripID/")({
 });
 
 function TripComponent() {
-  // const navigate = useNavigate({ from: "/" });
-  // const searchParams = Route.useSearch();
   const { user, trip } = Route.useLoaderData();
   const [
     { data: stops, isLoading: stopsLoading, error: stopsError },
@@ -53,8 +53,8 @@ function TripComponent() {
     ],
   });
 
-  // const [schedulerOpen, setSchedulerOpen] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const searchParams = Route.useSearch();
+  const navigate = useNavigate({ from: "/trips/$tripID" });
   const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
   const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
   const map = useMap();
@@ -68,10 +68,6 @@ function TripComponent() {
       setPlacesService(new places.PlacesService(map));
     }
   }, [places, map]);
-
-  // useEffect(() => {
-  //   setSchedulerOpen(searchParams.selectedDate !== undefined);
-  // }, [searchParams.selectedDate]);
 
   // load details for all favorited places (FIXME: extract this pattern into util as hook)
   useEffect(() => {
@@ -135,14 +131,12 @@ function TripComponent() {
         <Link to="/profile"> {user.email} </Link>
         <p
           onClick={() => {
-            // setSchedulerOpen(true);
             // FIXME: preserve last opened date?
-            setSelectedDate(trip.start_date);
-            // navigate({
-            //   to: "/trips/$tripID",
-            //   params: { tripID: trip.id },
-            //   search: { ...searchParams, selectedDate: trip.start_date },
-            // });
+            navigate({
+              to: "/trips/$tripID",
+              params: { tripID: trip.id },
+              search: { ...searchParams, selectedDate: trip.start_date },
+            });
           }}
         >
           Trip: {trip.name}
@@ -155,35 +149,34 @@ function TripComponent() {
           places={places}
           placesService={placesService}
           userID={user.id}
-          tripID={trip.id}
           favoritePlaces={favoritePlaces}
           stopPlaces={stopPlaces}
           events={events}
-          selectedDate={selectedDate}
         />
       </div>
 
       <div className="fixed z-50 top-0 right-0">
-        {selectedDate && (
-          <Scheduler
-            tripID={trip.id}
-            startDate={trip.start_date}
-            endDate={trip.end_date}
-            events={events}
-            favoritePlaces={favoritePlaces || []}
-            onDateChange={(date) => setSelectedDate(date)}
-            onClose={() => setSelectedDate(null)}
-            // onClose={() => {
-            //   // setSchedulerOpen(false);
-            //   setSelectedDate(null);
-            //   // navigate({
-            //   //   to: "/trips/$tripID",
-            //   //   params: { tripID: trip.id },
-            //   //   search: { ...searchParams, selectedDate: undefined },
-            //   // });
-            // }}
-          />
-        )}
+        <AnimatePresence>
+          {searchParams.selectedDate && (
+            <motion.div
+              className="w-full h-full"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{
+                duration: 0.2,
+                ease: "easeOut",
+              }}
+            >
+              <Scheduler
+                startDate={trip.start_date}
+                endDate={trip.end_date}
+                events={events}
+                favoritePlaces={favoritePlaces || []}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -15,11 +15,9 @@ interface Props {
   places: google.maps.PlacesLibrary | null;
   placesService: google.maps.places.PlacesService | null;
   userID: string;
-  tripID: string;
   favoritePlaces: MapBoxPlace[];
   stopPlaces: MapBoxPlace[];
   events: Event[];
-  selectedDate: string | null;
 }
 
 export function MapBox({
@@ -27,11 +25,9 @@ export function MapBox({
   places,
   placesService,
   userID,
-  // tripID,
   stopPlaces,
   favoritePlaces,
   events,
-  selectedDate,
 }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const searchParams = getRouteApi("/trips/$tripID/").useSearch();
@@ -85,6 +81,7 @@ export function MapBox({
     places: MapBoxPlace[],
     variant: "stop" | "favorite",
   ) => {
+    const selectedDate = searchParams.selectedDate;
     const placesOnSelectedDate = selectedDate
       ? events.filter((event) => event.start.includes(selectedDate))
       : events;
@@ -105,7 +102,7 @@ export function MapBox({
           lng={lng}
           variant={variant}
           isFaded={
-            selectedDate !== null &&
+            selectedDate !== undefined &&
             !placesOnSelectedDate.some((place) => place.placeID === placeID)
           }
           onClick={() => {

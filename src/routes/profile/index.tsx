@@ -55,7 +55,7 @@ function ProfileComponent() {
           navigate({
             to: "/trips/$tripID",
             params: { tripID },
-            search: { placeID: undefined },
+            search: { placeID: undefined, selectedDate: undefined },
           });
         }}
       >
@@ -72,7 +72,7 @@ function ProfileComponent() {
               <Link
                 to="/trips/$tripID"
                 params={{ tripID: id }}
-                search={{ placeID: undefined }}
+                search={{ placeID: undefined, selectedDate: undefined }}
               >
                 Trip: {name} ({id})
               </Link>
