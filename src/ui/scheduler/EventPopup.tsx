@@ -37,8 +37,8 @@ export function EventPopup({
 
   return (
     <div className="w-[250px] text-16 bg-white border border-black p-36 rounded relative">
-      <button className="text-20 p-12 absolute top-0 right-0" onClick={onClose}>
-        X
+      <button className="p-8 absolute top-0 right-0" onClick={onClose}>
+        <i className="fas fa-times text-20 hover:opacity-60 transition" />
       </button>
 
       <div className="l-column gap-8">

@@ -1,9 +1,11 @@
+import { useState } from "react";
+// import { useNavigate, getRouteApi } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewDay } from "@schedule-x/calendar";
 import { createEventsServicePlugin } from "@schedule-x/events-service";
 import { createDragAndDropPlugin } from "@schedule-x/drag-and-drop";
-import { useState } from "react";
+import { createResizePlugin } from "@schedule-x/resize";
 import { EventPopup } from "./EventPopup";
 import { Event } from "./types";
 import {
@@ -22,6 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import "@schedule-x/theme-default/dist/index.css";
 import "@schedule-x/theme-shadcn/dist/index.css";
 import "./styles.css";
+import { createCalendarControlsPlugin } from "@schedule-x/calendar-controls";
 
 interface Props {
   tripID: string;
@@ -40,11 +43,14 @@ export function Scheduler({
   events,
   onClose,
 }: Props) {
+  // const navigate = useNavigate({ from: "/" });
+  // const searchParams = getRouteApi("/trips/$tripID/").useSearch();
   const queryClient = useQueryClient();
-  const [selectedDate, setSelectedDate] = useState(startDate);
+  // const [selectedDate, setSelectedDate] = useState(searchParams.selectedDate);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
   const calendar = useCalendarApp({
-    selectedDate, // e.g. "2023-12-24"
+    selectedDate: startDate, // searchParams.selectedDate, // e.g. "2023-12-24"
     minDate: startDate,
     maxDate: endDate,
     dayBoundaries: {
@@ -56,13 +62,30 @@ export function Scheduler({
     plugins: [
       createEventsServicePlugin(),
       createDragAndDropPlugin(DEFAULT_MIN_TIME_INCREMENT),
+      createResizePlugin(DEFAULT_MIN_TIME_INCREMENT),
+      createCalendarControlsPlugin(),
     ],
     // theme: "shadcn",
     callbacks: {
-      onSelectedDateUpdate: (date) => {
-        setSelectedDate(date);
+      onSelectedDateUpdate: (_) => {
+        setSelectedEvent(null);
+        // setSelectedDate(date);
+
+        // navigate({
+        //   to: "/trips/$tripID",
+        //   params: { tripID },
+        //   search: {
+        //     ...searchParams,
+        //     selectedDate: date,
+        //   },
+        // });
       },
       onEventClick: ({ id, placeID, title, start, end }) => {
+        // navigate({
+        //   to: "/trips/$tripID",
+        //   params: { tripID },
+        //   search: { placeID },
+        // }); // FIXME: do i like this? and if so, what zoom?
         setSelectedEvent(null);
 
         setTimeout(() => {
@@ -104,16 +127,35 @@ export function Scheduler({
       // onBeforeEventUpdate: (e1, e2, app) => {
       // return true;
       // },
-      // onEventUpdate: (e) => {}
+      onEventUpdate: async ({ id, placeID, title, start, end }) => {
+        // FIXME: clean this up, validate
+        await createStopForTrip(
+          tripID,
+          id.toString(),
+          {
+            placeID,
+            title: title || "",
+            start,
+            end,
+          },
+          queryClient,
+        );
+      },
     },
   });
 
+  // useEffect(() => {
+  //   calendar.$app.calendarState.setView("day", searchParams.selectedDate);
+  //   calendar.$app.datePickerState.inputDisplayedValue.v =
+  //     searchParams.selectedDate;
+  // }, [searchParams.selectedDate]);
+
   return (
-    <div className="w-[400px] relative">
+    <div className="w-[400px] relative bg-white">
       <ScheduleXCalendar calendarApp={calendar} />
 
       <button className="absolute top-0 left-0 text-24 p-16" onClick={onClose}>
-        &gt;
+        <i className="fas fa-arrow-right hover:opacity-60 transition" />
       </button>
 
       {/* FIXME: modal positioning */}

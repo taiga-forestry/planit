@@ -59,3 +59,28 @@ export const findDuration = (start: string, end: string) => {
 
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 };
+
+// class LoggerPlugin {
+//   name = "logger-plugin";
+
+//   beforeRender($app: CalendarAppSingleton) {
+//     // $app.calendarEvents.list.value.forEach((event) => {
+//     //   console.log("init", event);
+//     // });
+
+//     $app.calendarState.setView("day", searchParams.selectedDate || startDate);
+//     // this.appSingleton = $app;
+//   }
+
+//   onRender($app: CalendarAppSingleton) {
+//     console.log("do something else");
+//     // this.appSingleton = $app;
+//     // $app.calendarState.setView("day", "2025-01-01");
+//   }
+
+//   hello($app: CalendarAppSingleton) {
+//     $app.calendarState.setView("day", searchParams.selectedDate || startDate);
+//   }
+// }
+
+// const x = new LoggerPlugin();

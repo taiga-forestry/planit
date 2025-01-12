@@ -18,7 +18,6 @@ export const Route = createFileRoute("/trips/$tripID/")({
   ),
   validateSearch: (search) => ({
     placeID: search.placeID as string | undefined, // FIXME: validate + add initial lat/long for map
-    // selectedDate: search.selectedDate as string | undefined,
   }),
   loaderDeps: ({ search: { placeID } }) => ({ placeID }),
   loader: async ({ params }) => {
@@ -54,10 +53,7 @@ function TripComponent() {
     ],
   });
 
-  const [schedulerOpen, setSchedulerOpen] = useState(
-    // searchParams.selectedDate !== undefined,
-    true,
-  );
+  const [schedulerOpen, setSchedulerOpen] = useState(true);
   const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
   const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
   const map = useMap();
@@ -133,7 +129,7 @@ function TripComponent() {
             // navigate({
             //   to: "/trips/$tripID",
             //   params: { tripID: trip.id },
-            //   // search: { ...searchParams, selectedDate: trip.start_date },
+            //   search: { ...searchParams, selectedDate: trip.start_date },
             // });
           }}
         >
@@ -150,18 +146,12 @@ function TripComponent() {
           tripID={trip.id}
           favoritePlaces={favoritePlaces}
           stopPlaces={stopPlaces}
-          // stopPlaceIDs={[
-          //   // don't mark the same place multiple times
-          //   ...new Set(stops?.map(({ place_id }) => place_id)),
-          // ]}
-          // favoritePlaceIDs={favorites?.map(({ place_id }) => place_id) || []}
         />
       </div>
 
       <div className="fixed z-50 top-0 right-0">
         {schedulerOpen && (
           <Scheduler
-            // key={searchParams.selectedDate}
             tripID={trip.id}
             favoritePlaces={favoritePlaces || []}
             startDate={trip.start_date}

@@ -859,6 +859,11 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.29.1.tgz#c82f04a09ba481e13857d6f2516e072aaa51b7f4"
   integrity sha512-+10CMg9vt1MoHj6x1pxyjPSMjHTIlqs8/tBztXvPAx24SKs9jwVnKqHJumlH/IzhaPUaj3T6T6wfZr8okdXaIg==
 
+"@schedule-x/calendar-controls@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@schedule-x/calendar-controls/-/calendar-controls-2.13.0.tgz#bdf365a0195c40730994ad87ac4b4a568a75bc39"
+  integrity sha512-JZHyERPUvPgST6kfr6GfjUfUrxzAx+bJRTSlwZ/0OS5Yi9+1BBaS4K1+WRmdD9Q/NIVgytCLS56VtxPAFBFa6Q==
+
 "@schedule-x/calendar@^2.12.1":
   version "2.12.1"
   resolved "https://registry.yarnpkg.com/@schedule-x/calendar/-/calendar-2.12.1.tgz#68cad96365e5bc4207c6550f467713c051db15e0"
@@ -878,6 +883,16 @@
   version "2.12.1"
   resolved "https://registry.yarnpkg.com/@schedule-x/react/-/react-2.12.1.tgz#a747573115cf85a518ece0b25b8f963d4808beb3"
   integrity sha512-bCgwqGirOWxMFWAKqZcwzbY9zdT3EdsNAaEPXhtDMj+t926kea+SwW69pEsYeluGlW504a9ITMbu6NlHJjV8aw==
+
+"@schedule-x/resize@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@schedule-x/resize/-/resize-2.13.0.tgz#d0952b403bcf52612a26e5e9d86c1719fa67c231"
+  integrity sha512-IjqCLs+VvuedqtbRJB3IaWCLYM2XD5EdHbwdjtLzVX5W0Swjqt3//r4PfmBMtKDYDpbYFMfvg5ROoA63qFX9Rg==
+
+"@schedule-x/shared@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@schedule-x/shared/-/shared-2.13.0.tgz#dff2330f2c1196938c3352976ca3ad89ee4fe4b5"
+  integrity sha512-59xY1daNPmR87qxJNexRMi6oTTyv0DciO9ysGTC1zq308x2dZqyuI515rQMg6N0TSeHVdhNxyRGlQv51D9YrZA==
 
 "@schedule-x/theme-default@^2.12.1":
   version "2.12.1"
