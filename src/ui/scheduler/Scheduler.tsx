@@ -28,19 +28,21 @@ import { createCalendarControlsPlugin } from "@schedule-x/calendar-controls";
 
 interface Props {
   tripID: string;
-  favoritePlaces: MapBoxPlace[];
   startDate: string;
   endDate: string;
   events: Event[];
+  favoritePlaces: MapBoxPlace[];
+  onDateChange: (newDate: string) => void;
   onClose: () => void;
 }
 
 export function Scheduler({
   tripID,
-  favoritePlaces,
   startDate,
   endDate,
   events,
+  favoritePlaces,
+  onDateChange,
   onClose,
 }: Props) {
   // const navigate = useNavigate({ from: "/" });
@@ -67,9 +69,9 @@ export function Scheduler({
     ],
     // theme: "shadcn",
     callbacks: {
-      onSelectedDateUpdate: (_) => {
+      onSelectedDateUpdate: (date) => {
         setSelectedEvent(null);
-        // setSelectedDate(date);
+        onDateChange(date);
 
         // navigate({
         //   to: "/trips/$tripID",

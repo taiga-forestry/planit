@@ -5,10 +5,11 @@ interface Props {
   lat: number;
   lng: number;
   variant: "favorite" | "stop";
+  isFaded: boolean;
   onClick: () => void;
 }
 
-export function MapMarker({ lat, lng, variant, onClick }: Props) {
+export function MapMarker({ lat, lng, variant, isFaded, onClick }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const colorsMap = {
     red: {
@@ -61,6 +62,7 @@ export function MapMarker({ lat, lng, variant, onClick }: Props) {
       position={{ lat, lng }}
       onClick={onClick}
       // className="hover:opacity-80 transition"
+      className={isFaded ? "opacity-40" : ""}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

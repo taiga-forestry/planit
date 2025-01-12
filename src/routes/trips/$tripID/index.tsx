@@ -53,7 +53,8 @@ function TripComponent() {
     ],
   });
 
-  const [schedulerOpen, setSchedulerOpen] = useState(true);
+  // const [schedulerOpen, setSchedulerOpen] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
   const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
   const map = useMap();
@@ -116,6 +117,15 @@ function TripComponent() {
     throw stopsError || favoritesError; // FIXME: blah
   }
 
+  const events =
+    stops?.map((stop) => ({
+      id: stop.id.toString(), // FIXME: id gen?
+      placeID: stop.place_id,
+      title: stop.title || "Untitled Event",
+      start: `${stop.start_date} ${stop.start_time}`,
+      end: `${stop.end_date} ${stop.end_time}`,
+    })) || [];
+
   // FIXME: user city / initial lat,lng
   // FIXME: add settings page to change trip details
   // FIXME: refactor scheduler open/close state into scheduler
@@ -125,7 +135,9 @@ function TripComponent() {
         <Link to="/profile"> {user.email} </Link>
         <p
           onClick={() => {
-            setSchedulerOpen(true);
+            // setSchedulerOpen(true);
+            // FIXME: preserve last opened date?
+            setSelectedDate(trip.start_date);
             // navigate({
             //   to: "/trips/$tripID",
             //   params: { tripID: trip.id },
@@ -146,33 +158,30 @@ function TripComponent() {
           tripID={trip.id}
           favoritePlaces={favoritePlaces}
           stopPlaces={stopPlaces}
+          events={events}
+          selectedDate={selectedDate}
         />
       </div>
 
       <div className="fixed z-50 top-0 right-0">
-        {schedulerOpen && (
+        {selectedDate && (
           <Scheduler
             tripID={trip.id}
-            favoritePlaces={favoritePlaces || []}
             startDate={trip.start_date}
             endDate={trip.end_date}
-            events={
-              stops?.map((stop) => ({
-                id: stop.id.toString(), // FIXME: id gen?
-                placeID: stop.place_id,
-                title: stop.title || "Untitled Event",
-                start: `${stop.start_date} ${stop.start_time}`,
-                end: `${stop.end_date} ${stop.end_time}`,
-              })) || []
-            }
-            onClose={() => {
-              setSchedulerOpen(false);
-              // navigate({
-              //   to: "/trips/$tripID",
-              //   params: { tripID: trip.id },
-              //   search: { ...searchParams, selectedDate: undefined },
-              // });
-            }}
+            events={events}
+            favoritePlaces={favoritePlaces || []}
+            onDateChange={(date) => setSelectedDate(date)}
+            onClose={() => setSelectedDate(null)}
+            // onClose={() => {
+            //   // setSchedulerOpen(false);
+            //   setSelectedDate(null);
+            //   // navigate({
+            //   //   to: "/trips/$tripID",
+            //   //   params: { tripID: trip.id },
+            //   //   search: { ...searchParams, selectedDate: undefined },
+            //   // });
+            // }}
           />
         )}
       </div>

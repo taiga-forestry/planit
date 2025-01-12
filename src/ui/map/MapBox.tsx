@@ -8,6 +8,7 @@ import { getPlaceByPlaceID } from "./util";
 import { PlaceInfoWindow } from "./PlaceInfoWindow";
 import { MapMarker } from "./MapMarker";
 import { createFavoriteForUser } from "../../api/users/mutations";
+import { Event } from "../scheduler/types";
 
 interface Props {
   map: google.maps.Map | null;
@@ -17,6 +18,8 @@ interface Props {
   tripID: string;
   favoritePlaces: MapBoxPlace[];
   stopPlaces: MapBoxPlace[];
+  events: Event[];
+  selectedDate: string | null;
 }
 
 export function MapBox({
@@ -27,6 +30,8 @@ export function MapBox({
   // tripID,
   stopPlaces,
   favoritePlaces,
+  events,
+  selectedDate,
 }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const searchParams = getRouteApi("/trips/$tripID/").useSearch();
@@ -80,6 +85,10 @@ export function MapBox({
     places: MapBoxPlace[],
     variant: "stop" | "favorite",
   ) => {
+    const placesOnSelectedDate = selectedDate
+      ? events.filter((event) => event.start.includes(selectedDate))
+      : events;
+
     return places
       .filter(({ placeID }) => {
         // only render favorite marker if no stop marker exists
@@ -95,6 +104,10 @@ export function MapBox({
           lat={lat}
           lng={lng}
           variant={variant}
+          isFaded={
+            selectedDate !== null &&
+            !placesOnSelectedDate.some((place) => place.placeID === placeID)
+          }
           onClick={() => {
             if (placesService) {
               getPlaceByPlaceID(placesService, placeID, onPlaceSelect);
