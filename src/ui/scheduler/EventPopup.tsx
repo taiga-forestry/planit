@@ -141,6 +141,7 @@ export function EventPopup({
           Save
         </button>
 
+        {/* FIXME: bug: if a place is unfavorited, can't delete dat event anymore - this is issue with tying favorite places <=> events */}
         {currentPlace && <button onClick={onDelete}>Delete Event</button>}
       </div>
     </div>
