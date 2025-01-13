@@ -159,7 +159,7 @@ export function Scheduler({
       <AnimatePresence>
         {selectedEvent && (
           <motion.div
-            className="absolute z-60 top-[30%] left-[25%]"
+            className="absolute z-40 top-[30%] left-[25%]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}

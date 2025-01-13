@@ -166,7 +166,7 @@ function TripComponent() {
         />
       </div>
 
-      <div className="fixed z-50 top-0 right-0">
+      <div className="fixed z-30 top-0 right-0">
         <AnimatePresence>
           {searchParams.selectedDate && (
             <motion.div
