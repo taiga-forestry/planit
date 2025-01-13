@@ -27,6 +27,19 @@ const getTripsByUserID = async (userID: string) => {
   return data ? data.map(({ trips }) => trips) : [];
 };
 
+const getFavoritesByTripID = async (tripID: string) => {
+  const { data, error } = await supabaseClient
+    .from("trips_favorites")
+    .select()
+    .eq("trip_id", tripID);
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
 const getStopsByTripID = async (tripID: string) => {
   const { data, error } = await supabaseClient
     .from("trips_stops")
@@ -54,8 +67,12 @@ export const tripsKeyQueryPairs = {
     key: (userID: string) => [...tripsKeyQueryPairs._base, userID],
     query: getTripsByUserID,
   },
+  getFavoritesByTripID: {
+    key: (tripID: string) => [...tripsKeyQueryPairs._base, tripID, "favorites"],
+    query: getFavoritesByTripID,
+  },
   getStopsByTripID: {
-    key: (tripID: string) => [...tripsKeyQueryPairs._base, tripID],
+    key: (tripID: string) => [...tripsKeyQueryPairs._base, tripID, "stops"],
     query: getStopsByTripID,
   },
 } as const;

@@ -30,6 +30,32 @@ export type Database = {
         };
         Relationships: [];
       };
+      trips_favorites: {
+        Row: {
+          id: number;
+          place_id: string;
+          trip_id: string;
+        };
+        Insert: {
+          id?: number;
+          place_id: string;
+          trip_id: string;
+        };
+        Update: {
+          id?: number;
+          place_id?: string;
+          trip_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "trips_favorites_trip_id_fkey";
+            columns: ["trip_id"];
+            isOneToOne: false;
+            referencedRelation: "trips";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       trips_stops: {
         Row: {
           end_date: string;
@@ -121,32 +147,6 @@ export type Database = {
           name?: string;
         };
         Relationships: [];
-      };
-      users_favorites: {
-        Row: {
-          id: number;
-          place_id: string;
-          user_id: string;
-        };
-        Insert: {
-          id?: number;
-          place_id: string;
-          user_id: string;
-        };
-        Update: {
-          id?: number;
-          place_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "users_favorites_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
       };
     };
     Views: {

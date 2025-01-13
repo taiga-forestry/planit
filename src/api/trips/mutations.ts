@@ -98,6 +98,49 @@ export const deleteStopForTrip = async (
   }
 };
 
+export const createFavoriteForTrip = async (
+  tripID: string,
+  fields: { placeID: string },
+  queryClient?: QueryClient,
+) => {
+  const { error } = await supabaseClient.from("trips_favorites").upsert({
+    trip_id: tripID,
+    place_id: fields.placeID,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (queryClient) {
+    queryClient.invalidateQueries({
+      queryKey: tripsKeyQueryPairs.getFavoritesByTripID.key(tripID),
+    });
+  }
+};
+
+export const deleteFavoriteForTrip = async (
+  tripID: string,
+  fields: { placeID: string },
+  queryClient?: QueryClient,
+) => {
+  const { error } = await supabaseClient
+    .from("trips_favorites")
+    .delete()
+    .eq("trips", tripID)
+    .eq("place_id", fields.placeID);
+
+  if (error) {
+    throw error;
+  }
+
+  if (queryClient) {
+    queryClient.invalidateQueries({
+      queryKey: tripsKeyQueryPairs.getFavoritesByTripID.key(tripID),
+    });
+  }
+};
+
 // export const updateTrip = async (tripID, fields: { name, dates }) => {
 // };
 
