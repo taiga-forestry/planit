@@ -131,9 +131,10 @@ function TripComponent() {
         <p> {trip.name} </p>
 
         <div className="row gap-24">
-          <Link to="/profile">
-            <i className="fas fa-user hover:opacity-70 transition" />
-          </Link>
+          {/* FIXME: add explorer support! */}
+          <button>
+            <i className="fas fa-compass hover:opacity-70 transition" />
+          </button>
 
           {/* FIXME: preserve last opened date? */}
           <button
@@ -151,6 +152,10 @@ function TripComponent() {
           <button>
             <i className="fas fa-gear hover:opacity-70 transition" />
           </button>
+
+          <Link to="/profile">
+            <i className="fas fa-user hover:opacity-70 transition" />
+          </Link>
         </div>
       </nav>
 
@@ -170,7 +175,7 @@ function TripComponent() {
         <AnimatePresence>
           {searchParams.selectedDate && (
             <motion.div
-              className="w-full h-full"
+              className="w-full h-full shadow-xl"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
