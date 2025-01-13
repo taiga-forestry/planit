@@ -127,7 +127,7 @@ export const deleteFavoriteForTrip = async (
   const { error } = await supabaseClient
     .from("trips_favorites")
     .delete()
-    .eq("trips", tripID)
+    .eq("trip_id", tripID)
     .eq("place_id", fields.placeID);
 
   if (error) {
