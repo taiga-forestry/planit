@@ -128,6 +128,9 @@ function TripComponent() {
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100vh] text-16 font-sans">
       <nav className="row justify-between text-24 p-12">
+        <Link to="/profile">
+          <i className="fas fa-home hover:opacity-70 transition" />
+        </Link>
         <p> {trip.name} </p>
 
         <div className="row gap-24">
@@ -152,10 +155,6 @@ function TripComponent() {
           <button>
             <i className="fas fa-gear hover:opacity-70 transition" />
           </button>
-
-          <Link to="/profile">
-            <i className="fas fa-user hover:opacity-70 transition" />
-          </Link>
         </div>
       </nav>
 
