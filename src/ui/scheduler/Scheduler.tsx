@@ -23,7 +23,7 @@ import {
 import { MapBoxPlace } from "../map/types";
 import { AnimatePresence, motion } from "framer-motion";
 import "@schedule-x/theme-default/dist/index.css";
-import "@schedule-x/theme-shadcn/dist/index.css";
+// import "@schedule-x/theme-shadcn/dist/index.css";
 import "./styles.css";
 
 interface Props {
@@ -31,8 +31,6 @@ interface Props {
   endDate: string;
   events: Event[];
   favoritePlaces: MapBoxPlace[];
-  // onDateChange: (newDate: string) => void;
-  // onClose: () => void;
 }
 
 export function Scheduler({

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/trips/$tripID/")({
     placeID: search.placeID as string | undefined, // FIXME: validate + add initial lat/long for map
     selectedDate: search.selectedDate as string | undefined,
   }),
-  loaderDeps: ({ search: { placeID } }) => ({ placeID }),
+  // loaderDeps: ({ search: { placeID } }) => ({ placeID }),
   loader: async ({ params }) => {
     const { email } = await getAuthorizedUser();
     const tripID = params.tripID;
@@ -36,6 +36,8 @@ export const Route = createFileRoute("/trips/$tripID/")({
 });
 
 function TripComponent() {
+  const navigate = useNavigate({ from: "/trips/$tripID" });
+  const searchParams = Route.useSearch();
   const { user, trip } = Route.useLoaderData();
   const [
     { data: stops, isLoading: stopsLoading, error: stopsError },
@@ -53,14 +55,12 @@ function TripComponent() {
     ],
   });
 
-  const searchParams = Route.useSearch();
-  const navigate = useNavigate({ from: "/trips/$tripID" });
-  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
-  const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
   const map = useMap();
   const places = useMapsLibrary("places");
   const [placesService, setPlacesService] =
     useState<google.maps.places.PlacesService | null>(null);
+  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
+  const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
 
   // initialize the PlacesService after places, map libraries load
   useEffect(() => {
@@ -128,19 +128,30 @@ function TripComponent() {
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100vh] text-16 font-sans">
       <nav className="row justify-between text-24 p-12">
-        <Link to="/profile"> {user.email} </Link>
-        <p
-          onClick={() => {
-            // FIXME: preserve last opened date?
-            navigate({
-              to: "/trips/$tripID",
-              params: { tripID: trip.id },
-              search: { ...searchParams, selectedDate: trip.start_date },
-            });
-          }}
-        >
-          Trip: {trip.name}
-        </p>
+        <p> {trip.name} </p>
+
+        <div className="row gap-24">
+          <Link to="/profile">
+            <i className="fas fa-user hover:opacity-70 transition" />
+          </Link>
+
+          {/* FIXME: preserve last opened date? */}
+          <button
+            onClick={() => {
+              navigate({
+                to: "/trips/$tripID",
+                params: { tripID: trip.id },
+                search: { ...searchParams, selectedDate: trip.start_date },
+              });
+            }}
+          >
+            <i className="fas fa-calendar hover:opacity-70 transition" />
+          </button>
+
+          <button>
+            <i className="fas fa-gear hover:opacity-70 transition" />
+          </button>
+        </div>
       </nav>
 
       <div className="relative w-[100%]">
