@@ -52,3 +52,25 @@ export const createFavoriteForUser = async (
     });
   }
 };
+
+export const deleteFavoriteForUser = async (
+  userID: string,
+  fields: { placeID: string },
+  queryClient?: QueryClient,
+) => {
+  const { error } = await supabaseClient
+    .from("users_favorites")
+    .delete()
+    .eq("user_id", userID)
+    .eq("place_id", fields.placeID);
+
+  if (error) {
+    throw error;
+  }
+
+  if (queryClient) {
+    queryClient.invalidateQueries({
+      queryKey: usersKeyQueryPairs.getFavoritesByUserID.key(userID),
+    });
+  }
+};
