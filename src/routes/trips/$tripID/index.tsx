@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { usersKeyQueryPairs } from "../../../api/users/queries";
 import { getAuthorizedUser } from "../../../database/auth";
 import { MapBox } from "../../../ui/map/MapBox";
 import { tripsKeyQueryPairs } from "../../../api/trips/queries";
@@ -22,35 +21,34 @@ export const Route = createFileRoute("/trips/$tripID/")({
     selectedDate: search.selectedDate as string | undefined,
   }),
   // loaderDeps: ({ search: { placeID } }) => ({ placeID }),
+  beforeLoad: async () => {
+    await getAuthorizedUser();
+  },
   loader: async ({ params }) => {
-    const { email } = await getAuthorizedUser();
     const tripID = params.tripID;
-    const [user, trip] = await Promise.all([
-      usersKeyQueryPairs.getUserByEmail.query(email),
-      tripsKeyQueryPairs.getTripByTripID.query(tripID),
-    ]);
+    const trip = await tripsKeyQueryPairs.getTripByTripID.query(tripID);
 
     // FIXME: make sure trip is under this user id lol
-    return { user, trip };
+    return { trip };
   },
 });
 
 function TripComponent() {
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const searchParams = Route.useSearch();
-  const { user, trip } = Route.useLoaderData();
+  const { trip } = Route.useLoaderData();
   const [
-    { data: stops, isLoading: stopsLoading, error: stopsError },
     { data: favorites, isLoading: favoritesLoading, error: favoritesError },
+    { data: stops, isLoading: stopsLoading, error: stopsError },
   ] = useQueries({
     queries: [
       {
-        queryKey: tripsKeyQueryPairs.getStopsByTripID.key(trip.id),
-        queryFn: () => tripsKeyQueryPairs.getStopsByTripID.query(trip.id),
+        queryKey: tripsKeyQueryPairs.getFavoritesByTripID.key(trip.id),
+        queryFn: () => tripsKeyQueryPairs.getFavoritesByTripID.query(trip.id),
       },
       {
-        queryKey: usersKeyQueryPairs.getFavoritesByUserID.key(user.id),
-        queryFn: () => usersKeyQueryPairs.getFavoritesByUserID.query(user.id),
+        queryKey: tripsKeyQueryPairs.getStopsByTripID.key(trip.id),
+        queryFn: () => tripsKeyQueryPairs.getStopsByTripID.query(trip.id),
       },
     ],
   });
@@ -63,6 +61,7 @@ function TripComponent() {
   const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
 
   // initialize the PlacesService after places, map libraries load
+  // FIXME: extract this into a hook (in general, look at all uses of useState/useEffect)
   useEffect(() => {
     if (places && map) {
       setPlacesService(new places.PlacesService(map));
@@ -163,7 +162,6 @@ function TripComponent() {
           map={map}
           places={places}
           placesService={placesService}
-          userID={user.id}
           favoritePlaces={favoritePlaces}
           stopPlaces={stopPlaces}
           events={events}
