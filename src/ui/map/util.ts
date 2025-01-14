@@ -42,11 +42,7 @@ export const getPlaceByPlaceID = (
         const address = place.formatted_address;
         const rating = place.rating;
         const numRatings = place.user_ratings_total;
-        // const photos = place.photos || [];
-        // const photoURL =
-        //   photos.length > 0
-        //     ? photos[0].getUrl({ maxWidth: 300, maxHeight: 300 })
-        //     : "FIXME: placeholder";
+        const photoURL = getPlacePhotoURL(place.photos);
         invariant(lat && lng, "place must have a latitude, longitude");
 
         const placeObject = {
@@ -57,7 +53,7 @@ export const getPlaceByPlaceID = (
           address,
           rating,
           numRatings,
-          // photoURL,
+          photoURL,
         };
 
         cache.put(placeID, placeObject);
@@ -65,6 +61,17 @@ export const getPlaceByPlaceID = (
       }
     },
   );
+};
+
+export const getPlacePhotoURL = (
+  photos: google.maps.places.PlacePhoto[] | undefined,
+) => {
+  const photoURL =
+    photos && photos.length > 0
+      ? photos[0].getUrl({ maxWidth: 300, maxHeight: 300 })
+      : "/public/images/no-maps-image.jpg";
+
+  return photoURL;
 };
 
 export const useMapUtils = () => {

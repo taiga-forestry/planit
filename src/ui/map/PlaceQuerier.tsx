@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
+import { getPlacePhotoURL } from "./util";
 
 interface Props {
   map: google.maps.Map | null;
@@ -52,6 +53,7 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
       const lng = place.geometry?.location?.lng();
       const rating = place.rating;
       const numRatings = place.user_ratings_total;
+      const photoURL = getPlacePhotoURL(place.photos);
       invariant(placeID, "placeID must have a value");
       invariant(lat, "lat must have a value");
       invariant(lng, "lng must have a value");
@@ -64,6 +66,7 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
         lng,
         rating,
         numRatings,
+        photoURL,
       });
     });
   }, [onPlaceSelect, placeAutocomplete]);
