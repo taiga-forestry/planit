@@ -56,3 +56,12 @@
   /* color: rgb(196, 199, 197) !important; */
   /* color: rgb(0, 0, 0) !important; */
 }
+
+/* move yesterday/tomorrow arrows and date input to the right  */
+.sx__calendar-header {
+  justify-content: end;
+}
+/* big "TODAY" button in top left */
+.sx__today-button {
+  display: none;
+}

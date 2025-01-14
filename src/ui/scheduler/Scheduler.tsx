@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
@@ -19,6 +19,7 @@ import {
   incrementDateTime,
   roundMinutes,
   calendarControlsPlugin,
+  // extractDateTime,
 } from "./util";
 import { MapBoxPlace } from "../map/types";
 import { AnimatePresence, motion } from "framer-motion";
@@ -31,6 +32,8 @@ interface Props {
   endDate: string;
   events: Event[];
   favoritePlaces: MapBoxPlace[];
+  isOpen: boolean;
+  setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export function Scheduler({
@@ -38,6 +41,54 @@ export function Scheduler({
   endDate,
   events,
   favoritePlaces,
+  isOpen,
+  setIsOpen,
+}: Props) {
+  const searchParams = getRouteApi("/trips/$tripID/").useSearch();
+
+  // when URL selectedDate updates, adjust calendar date + isOpen state accordingly
+  useEffect(() => {
+    setIsOpen(searchParams.selectedDate !== undefined);
+
+    if (searchParams.selectedDate) {
+      calendarControlsPlugin.setDate(searchParams.selectedDate);
+    }
+  }, [searchParams.selectedDate, setIsOpen]);
+
+  // wrapper for ScheduleXCalendar isOpen state, allows useEffect rerenders on navigation
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="w-[440px] relative bg-white shadow-xl"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 10 }}
+          transition={{
+            duration: 0.2,
+            ease: "easeOut",
+          }}
+        >
+          <SchedulerInternal
+            startDate={startDate}
+            endDate={endDate}
+            events={events}
+            favoritePlaces={favoritePlaces}
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function SchedulerInternal({
+  startDate,
+  endDate,
+  events,
+  favoritePlaces,
+  setIsOpen,
 }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const params = getRouteApi("/trips/$tripID/").useParams();
@@ -45,14 +96,28 @@ export function Scheduler({
   const queryClient = useQueryClient();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
-  useEffect(() => {
-    if (searchParams.selectedDate) {
-      calendarControlsPlugin.setDate(searchParams.selectedDate);
-    }
-  }, [searchParams.selectedDate]);
+  const onDateSelect = (date: string) => {
+    setIsOpen(true);
+    navigate({
+      search: {
+        ...searchParams,
+        selectedDate: date,
+      },
+    });
+  };
+
+  const onDateUnselect = () => {
+    setIsOpen(false);
+    navigate({
+      search: {
+        ...searchParams,
+        selectedDate: undefined,
+      },
+    });
+  };
 
   const calendar = useCalendarApp({
-    selectedDate: searchParams.selectedDate, // e.g. "2023-12-24"
+    selectedDate: searchParams.selectedDate || startDate, // e.g. "2023-12-24"
     minDate: startDate,
     maxDate: endDate,
     dayBoundaries: {
@@ -71,18 +136,16 @@ export function Scheduler({
     callbacks: {
       onSelectedDateUpdate: (date) => {
         setSelectedEvent(null);
-        navigate({
-          to: "/trips/$tripID",
-          params: { tripID: params.tripID },
-          search: { ...searchParams, selectedDate: date },
-        });
+        onDateSelect(date);
       },
       onEventClick: ({ id, placeID, title, start, end }) => {
+        // FIXME: cannot access state from here... wat
+        // const { date } = extractDateTime(start);
+
         // navigate({
-        //   to: "/trips/$tripID",
-        //   params: { tripID },
-        //   search: { placeID },
+        //   search: { selectedDate: date, placeID },
         // }); // FIXME: do i like this? and if so, what zoom?
+
         setSelectedEvent(null);
 
         setTimeout(() => {
@@ -109,7 +172,7 @@ export function Scheduler({
 
           const newEvent = {
             id: eventID,
-            placeID: "", // FIXME: compute
+            placeID: "", // FIXME: compute / validate
             title: "Untitled Event",
             start,
             end,
@@ -118,9 +181,6 @@ export function Scheduler({
           setSelectedEvent(newEvent);
         }, 200);
       },
-      // onBeforeEventUpdate: (e1, e2, app) => {
-      // return true;
-      // },
       onEventUpdate: async ({ id, placeID, title, start, end }) => {
         // FIXME: clean this up, validate
         await createStopForTrip(
@@ -139,18 +199,12 @@ export function Scheduler({
   });
 
   return (
-    <div className="w-[400px] relative bg-white">
+    <>
       <ScheduleXCalendar calendarApp={calendar} />
 
       <button
         className="absolute top-0 left-0 text-24 p-16"
-        onClick={() => {
-          navigate({
-            to: "/trips/$tripID",
-            params: { tripID: params.tripID },
-            search: { ...searchParams, selectedDate: undefined },
-          });
-        }}
+        onClick={onDateUnselect}
       >
         <i className="fas fa-arrow-right hover:opacity-60 transition" />
       </button>
@@ -225,6 +279,6 @@ export function Scheduler({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

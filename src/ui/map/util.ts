@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
+import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 // FIXME: validate cache on put/get, set size limit on cache
 const cache = {
@@ -29,6 +31,7 @@ export const getPlaceByPlaceID = (
         "geometry",
         "rating",
         "user_ratings_total",
+        // "photos",
       ],
     },
     (place) => {
@@ -39,6 +42,11 @@ export const getPlaceByPlaceID = (
         const address = place.formatted_address;
         const rating = place.rating;
         const numRatings = place.user_ratings_total;
+        // const photos = place.photos || [];
+        // const photoURL =
+        //   photos.length > 0
+        //     ? photos[0].getUrl({ maxWidth: 300, maxHeight: 300 })
+        //     : "FIXME: placeholder";
         invariant(lat && lng, "place must have a latitude, longitude");
 
         const placeObject = {
@@ -49,6 +57,7 @@ export const getPlaceByPlaceID = (
           address,
           rating,
           numRatings,
+          // photoURL,
         };
 
         cache.put(placeID, placeObject);
@@ -58,10 +67,36 @@ export const getPlaceByPlaceID = (
   );
 };
 
-// export const hotspots = [
-//   { placeID: "ChIJaXQRs6lZwokRY6EFpJnhNNE" }, // empire state
-//   { placeID: "ChIJPTacEpBQwokRKwIlDXelxkA" }, // statue of liberty
-//   { placeID: "ChIJK3vOQyNawokRXEa9errdJiU" }, // brooklyn bridge
-//   { placeID: "ChIJ4zGFAZpYwokRGUGph3Mf37k" }, // central park
-//   { placeID: "ChIJw2lMFL9ZwokRosAtly52YX4" }, // chelsea market
-// ];
+export const useMapUtils = () => {
+  const map = useMap();
+  const places = useMapsLibrary("places");
+  const [placesService, setPlacesService] =
+    useState<google.maps.places.PlacesService | null>(null);
+
+  // initialize the PlacesService after places, map libraries load
+  // FIXME: extract this into a hook (in general, look at all uses of useState/useEffect) SOME SHIT IS SLOW
+  useEffect(() => {
+    if (places && map) {
+      setPlacesService(new places.PlacesService(map));
+    }
+  }, [places, map]);
+
+  return { map, places, placesService };
+};
+
+export const useLoadedPlaces = (
+  placeIDs: string[],
+  placesService: google.maps.places.PlacesService | null,
+) => {
+  const places: MapBoxPlace[] = [];
+
+  if (placesService) {
+    placeIDs.forEach((placeID) => {
+      getPlaceByPlaceID(placesService, placeID, (place) => {
+        places.push(place);
+      });
+    });
+  }
+
+  return places;
+};

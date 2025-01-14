@@ -1,14 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { getAuthorizedUser } from "../../../database/auth";
 import { MapBox } from "../../../ui/map/MapBox";
 import { tripsKeyQueryPairs } from "../../../api/trips/queries";
 import { Scheduler } from "../../../ui/scheduler/Scheduler";
-import { APIProvider, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
-import { getPlaceByPlaceID } from "../../../ui/map/util";
-import { MapBoxPlace } from "../../../ui/map/types";
-import { AnimatePresence, motion } from "framer-motion";
+import { APIProvider } from "@vis.gl/react-google-maps";
+import { useLoadedPlaces, useMapUtils } from "../../../ui/map/util";
 
 export const Route = createFileRoute("/trips/$tripID/")({
   component: () => (
@@ -37,6 +35,7 @@ function TripComponent() {
   const navigate = useNavigate({ from: "/trips/$tripID" });
   const searchParams = Route.useSearch();
   const { trip } = Route.useLoaderData();
+  const { map, places, placesService } = useMapUtils();
   const [
     { data: favorites, isLoading: favoritesLoading, error: favoritesError },
     { data: stops, isLoading: stopsLoading, error: stopsError },
@@ -52,57 +51,18 @@ function TripComponent() {
       },
     ],
   });
+  const favoritePlaces = useLoadedPlaces(
+    [...new Set(favorites?.map(({ place_id }) => place_id))],
+    placesService,
+  );
+  const stopPlaces = useLoadedPlaces(
+    [...new Set(stops?.map(({ place_id }) => place_id))],
+    placesService,
+  );
 
-  const map = useMap();
-  const places = useMapsLibrary("places");
-  const [placesService, setPlacesService] =
-    useState<google.maps.places.PlacesService | null>(null);
-  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
-  const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
-
-  // initialize the PlacesService after places, map libraries load
-  // FIXME: extract this into a hook (in general, look at all uses of useState/useEffect)
-  useEffect(() => {
-    if (places && map) {
-      setPlacesService(new places.PlacesService(map));
-    }
-  }, [places, map]);
-
-  // load details for all favorited places (FIXME: extract this pattern into util as hook)
-  useEffect(() => {
-    if (placesService) {
-      const loadPlaces = (
-        placeIDs: string[],
-        setPlaces: (places: MapBoxPlace[]) => void,
-      ) => {
-        const places: MapBoxPlace[] = [];
-
-        if (placeIDs.length === 0) {
-          return setFavoritePlaces([]);
-        }
-
-        placeIDs.forEach((placeID) => {
-          getPlaceByPlaceID(placesService, placeID, (place) => {
-            places.push(place);
-
-            if (places.length === placeIDs.length) {
-              setPlaces(places);
-            }
-          });
-        });
-      };
-
-      // FIXME: clean this
-      loadPlaces(
-        [...new Set(favorites?.map(({ place_id }) => place_id))],
-        setFavoritePlaces,
-      );
-      loadPlaces(
-        [...new Set(stops?.map(({ place_id }) => place_id))],
-        setStopPlaces,
-      );
-    }
-  }, [placesService, favorites, stops]);
+  const [schedulerOpen, setSchedulerOpen] = useState(
+    searchParams.selectedDate !== undefined,
+  );
 
   if (stopsLoading || favoritesLoading) {
     return <div> loading... </div>; // FIXME: blah blah
@@ -141,10 +101,12 @@ function TripComponent() {
           {/* FIXME: preserve last opened date? */}
           <button
             onClick={() => {
+              setSchedulerOpen(!schedulerOpen);
               navigate({
-                to: "/trips/$tripID",
-                params: { tripID: trip.id },
-                search: { ...searchParams, selectedDate: trip.start_date },
+                search: {
+                  ...searchParams,
+                  selectedDate: trip.start_date,
+                },
               });
             }}
           >
@@ -169,27 +131,14 @@ function TripComponent() {
       </div>
 
       <div className="fixed z-30 top-0 right-0">
-        <AnimatePresence>
-          {searchParams.selectedDate && (
-            <motion.div
-              className="w-full h-full shadow-xl"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{
-                duration: 0.2,
-                ease: "easeOut",
-              }}
-            >
-              <Scheduler
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                events={events}
-                favoritePlaces={favoritePlaces || []}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Scheduler
+          startDate={trip.start_date}
+          endDate={trip.end_date}
+          events={events}
+          favoritePlaces={favoritePlaces || []}
+          isOpen={schedulerOpen}
+          setIsOpen={setSchedulerOpen}
+        />
       </div>
     </div>
   );
