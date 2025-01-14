@@ -82,8 +82,6 @@ function TripComponent() {
     })) || [];
 
   // FIXME: user city / initial lat,lng
-  // FIXME: add settings page to change trip details
-  // FIXME: refactor scheduler open/close state into scheduler
   return (
     <div className="grid grid-rows-[auto_1fr] h-[100vh] text-16 font-sans">
       <nav className="row justify-between text-24 p-12">
@@ -113,6 +111,7 @@ function TripComponent() {
             <i className="fas fa-calendar hover:opacity-70 transition" />
           </button>
 
+          {/* // FIXME: add settings to change trip details (start/end date, min/max times, name, publicity, etc.) */}
           <button>
             <i className="fas fa-gear hover:opacity-70 transition" />
           </button>

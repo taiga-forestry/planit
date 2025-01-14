@@ -67,6 +67,8 @@ export const tripsKeyQueryPairs = {
     key: (userID: string) => [...tripsKeyQueryPairs._base, userID],
     query: getTripsByUserID,
   },
+  // FIXME: differentiate between user favs and trip favs w/ one unified "favorites" table?
+  // two FKs (userID, TripID)
   getFavoritesByTripID: {
     key: (tripID: string) => [...tripsKeyQueryPairs._base, tripID, "favorites"],
     query: getFavoritesByTripID,
