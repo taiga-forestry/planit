@@ -39,7 +39,9 @@ export function MapBox({
   // when URL placeID updates, adjust selectedPlace accordingly
   useEffect(() => {
     if (placesService && searchParams.placeID) {
-      getPlaceByPlaceID(placesService, searchParams.placeID, setSelectedPlace);
+      getPlaceByPlaceID(placesService, searchParams.placeID).then((place) =>
+        setSelectedPlace(place),
+      );
     } else {
       setSelectedPlace(null);
     }
@@ -100,7 +102,9 @@ export function MapBox({
           allowInfoWindow={selectedPlace?.placeID !== place.placeID}
           onClick={() => {
             if (placesService) {
-              getPlaceByPlaceID(placesService, place.placeID, onPlaceSelect);
+              getPlaceByPlaceID(placesService, place.placeID).then(
+                onPlaceSelect,
+              );
             }
           }}
         />
@@ -116,7 +120,7 @@ export function MapBox({
         defaultCenter={computeDefaultCenter()}
         defaultZoom={13}
         minZoom={3}
-        maxZoom={15}
+        maxZoom={18}
         restriction={{
           // don't allow users to scroll off the globe!
           strictBounds: true,

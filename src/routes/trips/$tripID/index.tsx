@@ -38,8 +38,8 @@ function TripComponent() {
   const { trip } = Route.useLoaderData();
   const { map, places, placesService } = useMapUtils();
   const [
-    { data: favorites, isLoading: favoritesLoading, error: favoritesError },
-    { data: stops, isLoading: stopsLoading, error: stopsError },
+    { data: favorites, error: favoritesError },
+    { data: stops, error: stopsError },
   ] = useQueries({
     queries: [
       {
@@ -60,26 +60,15 @@ function TripComponent() {
     if (placesService) {
       const loadPlaces = (
         placeIDs: string[],
-        setPlaces: (places: MapBoxPlace[]) => void,
+        callback: (places: MapBoxPlace[]) => void,
       ) => {
-        const places: MapBoxPlace[] = [];
-
-        if (placeIDs.length === 0) {
-          setFavoritePlaces([]);
-        }
-
-        placeIDs.forEach((placeID) => {
-          getPlaceByPlaceID(placesService, placeID, (place) => {
-            places.push(place);
-
-            if (places.length === placeIDs.length) {
-              setPlaces(places);
-            }
-          });
+        Promise.all(
+          placeIDs.map((placeID) => getPlaceByPlaceID(placesService, placeID)),
+        ).then((places) => {
+          callback(places);
         });
       };
 
-      // FIXME: clean this into hook somehow pls
       loadPlaces(
         [...new Set(favorites?.map(({ place_id }) => place_id))],
         setFavoritePlaces,
@@ -94,10 +83,6 @@ function TripComponent() {
   const [schedulerOpen, setSchedulerOpen] = useState(
     searchParams.selectedDate !== undefined,
   );
-
-  if (stopsLoading || favoritesLoading) {
-    return <div> loading... </div>; // FIXME: blah blah
-  }
 
   if (stopsError || favoritesError) {
     throw stopsError || favoritesError; // FIXME: blah

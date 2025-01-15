@@ -41,36 +41,55 @@ export const validateAndCachePlace = (
   return placeObject;
 };
 
-export const getPlaceByPlaceID = (
+export const getPlaceByPlaceID = async (
   placesService: google.maps.places.PlacesService,
   placeID: string,
-  callback: (place: MapBoxPlace) => void,
-) => {
+): Promise<MapBoxPlace> => {
   const cachedPlace = placesCache.get(placeID);
 
   if (cachedPlace) {
-    return callback(JSON.parse(cachedPlace));
+    return JSON.parse(cachedPlace);
   }
 
-  placesService.getDetails(
-    {
-      placeId: placeID,
-      fields: [
-        "name",
-        "formatted_address",
-        "geometry",
-        "rating",
-        "user_ratings_total",
-        "photos",
-      ],
-    },
-    (place) => {
-      // FIXME: check status on this
-      if (place) {
-        callback(validateAndCachePlace(place));
-      }
-    },
-  );
+  // helper function to wrap Google PlacesService getDetails in a Promise
+  const getPlaceDetails = (): Promise<google.maps.places.PlaceResult> => {
+    return new Promise((resolve, reject) => {
+      placesService.getDetails(
+        {
+          placeId: placeID,
+          fields: [
+            "place_id",
+            "name",
+            "formatted_address",
+            "geometry",
+            "rating",
+            "user_ratings_total",
+            "photos",
+          ],
+        },
+        (place, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+            resolve(place);
+          } else {
+            reject(
+              new Error(
+                `Failed to fetch place details for ${placeID}, status: ${status}`,
+              ),
+            );
+          }
+        },
+      );
+    });
+  };
+
+  const place = await getPlaceDetails();
+  return validateAndCachePlace(place);
+  // try {
+
+  // } catch (error) {
+  //   console.error("Error fetching place details:", error);
+  //   return null;
+  // }
 };
 
 export const getPlacePhotoURL = (
