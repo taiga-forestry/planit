@@ -13,6 +13,14 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
   const [placeAutocomplete, setPlaceAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null);
 
+  // ensures event listeners are only added once => fixes weird placequerier interaction bugs
+  const placeChangedListenerRef = useRef<google.maps.MapsEventListener | null>(
+    null,
+  );
+  const boundsChangedListenerRef = useRef<google.maps.MapsEventListener | null>(
+    null,
+  );
+
   // initialize the autocomplete querier on load
   useEffect(() => {
     const options = {
@@ -44,16 +52,44 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
   useEffect(() => {
     if (!placeAutocomplete) return;
 
-    placeAutocomplete.addListener("place_changed", () => {
-      const place = placeAutocomplete.getPlace();
-      onPlaceSelect(validateAndCachePlace(place));
-    });
+    if (!placeChangedListenerRef.current) {
+      placeChangedListenerRef.current = placeAutocomplete.addListener(
+        "place_changed",
+        () => {
+          const place = placeAutocomplete.getPlace();
+          onPlaceSelect(validateAndCachePlace(place));
+        },
+      );
+    }
+
+    return () => {
+      if (placeChangedListenerRef.current) {
+        placeChangedListenerRef.current.remove();
+        placeChangedListenerRef.current = null;
+      }
+    };
   }, [onPlaceSelect, placeAutocomplete]);
 
   // when map bounds change, ensure autocomplete maintains relevant local results
-  map?.addListener("bounds_changed", () => {
-    placeAutocomplete?.setBounds(map.getBounds());
-  });
+  useEffect(() => {
+    if (!map || !placeAutocomplete) return;
+
+    if (!boundsChangedListenerRef.current) {
+      boundsChangedListenerRef.current = map.addListener(
+        "bounds_changed",
+        () => {
+          placeAutocomplete.setBounds(map.getBounds());
+        },
+      );
+    }
+
+    return () => {
+      if (boundsChangedListenerRef.current) {
+        boundsChangedListenerRef.current.remove();
+        boundsChangedListenerRef.current = null;
+      }
+    };
+  }, [map, placeAutocomplete]);
 
   return (
     <div className="absolute top-16 left-16 z-20 border border-black rounded">
