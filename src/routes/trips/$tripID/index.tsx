@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { getAuthorizedUser } from "../../../database/auth";
@@ -58,15 +58,14 @@ function TripComponent() {
 
   useEffect(() => {
     if (placesService) {
-      const loadPlaces = (
+      const loadPlaces = async (
         placeIDs: string[],
-        callback: (places: MapBoxPlace[]) => void,
+        setPlaces: Dispatch<SetStateAction<MapBoxPlace[]>>,
       ) => {
-        Promise.all(
+        const places = await Promise.all(
           placeIDs.map((placeID) => getPlaceByPlaceID(placesService, placeID)),
-        ).then((places) => {
-          callback(places);
-        });
+        );
+        setPlaces(places);
       };
 
       loadPlaces(

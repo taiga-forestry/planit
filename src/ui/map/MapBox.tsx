@@ -38,13 +38,19 @@ export function MapBox({
 
   // when URL placeID updates, adjust selectedPlace accordingly
   useEffect(() => {
-    if (placesService && searchParams.placeID) {
-      getPlaceByPlaceID(placesService, searchParams.placeID).then((place) =>
-        setSelectedPlace(place),
-      );
-    } else {
-      setSelectedPlace(null);
-    }
+    const updateSelectedPlaceOnNavigate = async () => {
+      if (placesService && searchParams.placeID) {
+        const newPlace = await getPlaceByPlaceID(
+          placesService,
+          searchParams.placeID,
+        );
+        setSelectedPlace(newPlace);
+      } else {
+        setSelectedPlace(null);
+      }
+    };
+
+    updateSelectedPlaceOnNavigate();
   }, [searchParams.placeID, placesService]);
 
   const onPlaceSelect = (place: MapBoxPlace) => {
@@ -100,11 +106,13 @@ export function MapBox({
             !placeIDsOnSelectedDate.has(place.placeID)
           }
           allowInfoWindow={selectedPlace?.placeID !== place.placeID}
-          onClick={() => {
+          onClick={async () => {
             if (placesService) {
-              getPlaceByPlaceID(placesService, place.placeID).then(
-                onPlaceSelect,
+              const newPlace = await getPlaceByPlaceID(
+                placesService,
+                place.placeID,
               );
+              onPlaceSelect(newPlace);
             }
           }}
         />
