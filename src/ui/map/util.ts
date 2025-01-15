@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
@@ -90,28 +90,4 @@ export const useMapUtils = () => {
   }, [places, map]);
 
   return { map, places, placesService };
-};
-
-export const useLoadedPlaces = (
-  placeIDs: string[],
-  placesService: google.maps.places.PlacesService | null,
-) => {
-  const [places, setPlaces] = useState<MapBoxPlace[]>([]);
-  const tempPlaces = useMemo<MapBoxPlace[]>(() => [], []);
-
-  useEffect(() => {
-    if (placesService) {
-      placeIDs.forEach((placeID) => {
-        getPlaceByPlaceID(placesService, placeID, (place) => {
-          tempPlaces.push(place);
-
-          if (tempPlaces.length === placeIDs.length) {
-            setPlaces([...tempPlaces]);
-          }
-        });
-      });
-    }
-  }, [tempPlaces, placeIDs, placesService]);
-
-  return places;
 };

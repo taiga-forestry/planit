@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { getAuthorizedUser } from "../../../database/auth";
@@ -6,7 +6,8 @@ import { MapBox } from "../../../ui/map/MapBox";
 import { tripsKeyQueryPairs } from "../../../api/trips/queries";
 import { Scheduler } from "../../../ui/scheduler/Scheduler";
 import { APIProvider } from "@vis.gl/react-google-maps";
-import { useLoadedPlaces, useMapUtils } from "../../../ui/map/util";
+import { getPlaceByPlaceID, useMapUtils } from "../../../ui/map/util";
+import { MapBoxPlace } from "../../../ui/map/types";
 
 export const Route = createFileRoute("/trips/$tripID/")({
   component: () => (
@@ -51,14 +52,40 @@ function TripComponent() {
       },
     ],
   });
-  const favoritePlaces = useLoadedPlaces(
-    [...new Set(favorites?.map(({ place_id }) => place_id))],
-    placesService,
-  );
-  const stopPlaces = useLoadedPlaces(
-    [...new Set(stops?.map(({ place_id }) => place_id))],
-    placesService,
-  );
+
+  const [favoritePlaces, setFavoritePlaces] = useState<MapBoxPlace[]>([]);
+  const [stopPlaces, setStopPlaces] = useState<MapBoxPlace[]>([]);
+
+  useEffect(() => {
+    if (placesService) {
+      const loadPlaces = (
+        placeIDs: string[],
+        setPlaces: (places: MapBoxPlace[]) => void,
+      ) => {
+        const places: MapBoxPlace[] = [];
+        if (placeIDs.length === 0) {
+          return setFavoritePlaces([]);
+        }
+        placeIDs.forEach((placeID) => {
+          getPlaceByPlaceID(placesService, placeID, (place) => {
+            places.push(place);
+            if (places.length === placeIDs.length) {
+              setPlaces(places);
+            }
+          });
+        });
+      };
+      // FIXME: clean this
+      loadPlaces(
+        [...new Set(favorites?.map(({ place_id }) => place_id))],
+        setFavoritePlaces,
+      );
+      loadPlaces(
+        [...new Set(stops?.map(({ place_id }) => place_id))],
+        setStopPlaces,
+      );
+    }
+  }, [placesService, favorites, stops]);
 
   const [schedulerOpen, setSchedulerOpen] = useState(
     searchParams.selectedDate !== undefined,
