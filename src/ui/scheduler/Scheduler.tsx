@@ -206,7 +206,7 @@ function SchedulerInternal({
         className="absolute top-0 left-0 text-24 p-16"
         onClick={onDateUnselect}
       >
-        <i className="fas fa-arrow-right hover:opacity-60 transition" />
+        <i className="fas fa-times hover:opacity-60 transition" />
       </button>
 
       {/* FIXME: modal positioning */}

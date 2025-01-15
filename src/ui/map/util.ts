@@ -51,7 +51,7 @@ export const getPlaceByPlaceID = async (
     return JSON.parse(cachedPlace);
   }
 
-  // helper function to wrap Google PlacesService getDetails in a Promise
+  // wrap Google PlacesService getDetails in a Promise
   const getPlaceDetails = (): Promise<google.maps.places.PlaceResult> => {
     return new Promise((resolve, reject) => {
       placesService.getDetails(
