@@ -65,3 +65,8 @@
 .sx__today-button {
   display: none;
 }
+
+/* FIXME: add hover effects to cal events */
+.sx__time-grid-event:hover, .sx__event:hover {
+  /* smth like this?idek */
+}

@@ -7,14 +7,16 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { getPlaceByPlaceID } from "./util";
 import { PlaceInfoWindow } from "./PlaceInfoWindow";
 import { MapMarker } from "./MapMarker";
-import { createFavoriteForUser } from "../../api/users/mutations";
+import {
+  createFavoriteForTrip,
+  deleteFavoriteForTrip,
+} from "../../api/trips/mutations";
 import { Event } from "../scheduler/types";
 
 interface Props {
   map: google.maps.Map | null;
   places: google.maps.PlacesLibrary | null;
   placesService: google.maps.places.PlacesService | null;
-  userID: string;
   favoritePlaces: MapBoxPlace[];
   stopPlaces: MapBoxPlace[];
   events: Event[];
@@ -24,52 +26,40 @@ export function MapBox({
   map,
   places,
   placesService,
-  userID,
   stopPlaces,
   favoritePlaces,
   events,
 }: Props) {
   const navigate = useNavigate({ from: "/trips/$tripID" });
+  const params = getRouteApi("/trips/$tripID/").useParams();
   const searchParams = getRouteApi("/trips/$tripID/").useSearch();
   const queryClient = useQueryClient();
   const [selectedPlace, setSelectedPlace] = useState<MapBoxPlace | null>(null);
 
-  // if given an initialPlaceID, find relevant info w/ the PlacesService
+  // when URL placeID updates, adjust selectedPlace accordingly
   useEffect(() => {
-    if (searchParams.placeID && placesService) {
+    if (placesService && searchParams.placeID) {
       getPlaceByPlaceID(placesService, searchParams.placeID, setSelectedPlace);
+    } else {
+      setSelectedPlace(null);
     }
   }, [searchParams.placeID, placesService]);
 
-  // every time user selects a new place, adjust map bounds to keep user in frame
-  useEffect(() => {
-    if (map && selectedPlace) {
-      const { lat, lng } = selectedPlace;
-      const delta = 0.005;
-      const swCorner = new google.maps.LatLng(lat - delta, lng - delta);
-      const neCorner = new google.maps.LatLng(lat + delta, lng + delta);
-      map.fitBounds(new google.maps.LatLngBounds(swCorner, neCorner));
-    }
-  }, [map, selectedPlace]);
-
-  // when user selects a new place, adjust URL placeID search param
   const onPlaceSelect = (place: MapBoxPlace) => {
+    setSelectedPlace(place);
     navigate({
       search: {
         ...searchParams,
         placeID: place.placeID,
       },
     }); // FIXME: include name, lat, lng?
-    setSelectedPlace(place);
   };
 
-  // when user closes window/otherwise unselects place, adjust URL + state
   const onPlaceUnselect = () => {
+    setSelectedPlace(null);
     navigate({
-      to: window.location.pathname,
       search: { ...searchParams, placeID: undefined },
     });
-    setSelectedPlace(null);
   };
 
   const computeDefaultCenter = () => {
@@ -79,35 +69,38 @@ export function MapBox({
 
   const renderMarkers = (
     places: MapBoxPlace[],
-    variant: "stop" | "favorite",
+    variant: "favorite" | "stop",
   ) => {
     const selectedDate = searchParams.selectedDate;
-    const placesOnSelectedDate = selectedDate
-      ? events.filter((event) => event.start.includes(selectedDate))
-      : events;
+    const placeIDsOnSelectedDate = new Set([
+      ...events
+        .filter((event) => event.start.includes(selectedDate || ""))
+        .map(({ placeID }) => placeID),
+    ]);
 
     return places
       .filter(({ placeID }) => {
-        // only render favorite marker if no stop marker exists
+        // only render favorite marker if no stop marker exists - don't render both!
         if (variant === "favorite") {
           return !stopPlaces.some((stop) => stop.placeID === placeID);
         }
 
         return true;
       })
-      .map(({ placeID, lat, lng }) => (
+      .map((place) => (
         <MapMarker
-          key={`${variant} MapMarker: ${placeID}`}
-          lat={lat}
-          lng={lng}
+          key={`${variant} MapMarker: ${place.placeID}`}
+          place={place}
           variant={variant}
+          // if selectedDate exists, markers not on this date should be faded out
           isFaded={
             selectedDate !== undefined &&
-            !placesOnSelectedDate.some((place) => place.placeID === placeID)
+            !placeIDsOnSelectedDate.has(place.placeID)
           }
+          allowInfoWindow={selectedPlace?.placeID !== place.placeID}
           onClick={() => {
             if (placesService) {
-              getPlaceByPlaceID(placesService, placeID, onPlaceSelect);
+              getPlaceByPlaceID(placesService, place.placeID, onPlaceSelect);
             }
           }}
         />
@@ -123,9 +116,9 @@ export function MapBox({
         defaultCenter={computeDefaultCenter()}
         defaultZoom={13}
         minZoom={3}
-        maxZoom={21}
+        maxZoom={15}
         restriction={{
-          // don't allow users to scroll off the map!
+          // don't allow users to scroll off the globe!
           strictBounds: true,
           latLngBounds: {
             north: 85,
@@ -142,25 +135,27 @@ export function MapBox({
           <PlaceInfoWindow
             place={selectedPlace}
             onClose={onPlaceUnselect}
-            isSaveEnabled={
-              !favoritePlaces?.find(
-                ({ placeID }) => placeID === selectedPlace.placeID,
-              )
-            }
-            onSave={async () => {
-              await createFavoriteForUser(
-                userID,
+            // FIXME: render optimistically?
+            isFavorited={favoritePlaces?.some(
+              ({ placeID }) => placeID === selectedPlace.placeID,
+            )}
+            onFavorite={async () => {
+              await createFavoriteForTrip(
+                params.tripID,
                 { placeID: selectedPlace.placeID },
                 queryClient,
               );
-
-              // auto close info window after saving!
-              onPlaceUnselect();
+            }}
+            onUnfavorite={async () => {
+              await deleteFavoriteForTrip(
+                params.tripID,
+                { placeID: selectedPlace.placeID },
+                queryClient,
+              );
             }}
           />
         )}
 
-        {/* FIXME: add options to filter markedPlaces (i.e. only today) */}
         {renderMarkers(favoritePlaces, "favorite")}
         {renderMarkers(stopPlaces, "stop")}
       </Map>

@@ -1,0 +1,44 @@
+/* FIXME: annotate + clean up styles.css files */
+.gm-style-iw-d {
+  overflow: hidden !important;
+}
+
+.gm-style-iw, .gm-style-iw-c {
+  padding: 0 !important;
+}
+
+.gm-style-iw-chr {
+  position: absolute !important;
+  display: flex;
+  justify-content: end;
+  width: 100%;
+}
+.gm-style-iw-chr .gm-ui-hover-effect {
+  display: none !important;
+  /* background-color: rgba(255,255,255,0.9) !important;
+  opacity: 1 !important;
+  transition: all 0.1s linear;
+}
+
+.gm-ui-hover-effect:hover {
+  /* background-color: rgba(255,255,255,0.3) !important;
+  border-radius: 45px;
+  opacity: 0.5 !important;  */
+}
+
+.gm-style-iw-tc {
+  display: none;
+}
+
+.map-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid black;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
+
+.map-marker-icon {
+  transform: rotate(45deg);
+}

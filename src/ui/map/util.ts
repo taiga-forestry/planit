@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
@@ -31,10 +31,11 @@ export const getPlaceByPlaceID = (
         "geometry",
         "rating",
         "user_ratings_total",
-        // "photos",
+        "photos",
       ],
     },
     (place) => {
+      // FIXME: check status on this
       if (place) {
         const lat = place.geometry?.location?.lat();
         const lng = place.geometry?.location?.lng();
@@ -69,7 +70,7 @@ export const getPlacePhotoURL = (
   const photoURL =
     photos && photos.length > 0
       ? photos[0].getUrl({ maxWidth: 300, maxHeight: 300 })
-      : "/public/images/no-maps-image.jpg";
+      : "/public/images/no-maps-image.jpg"; // FIXME: why is this loading image?
 
   return photoURL;
 };
@@ -95,15 +96,22 @@ export const useLoadedPlaces = (
   placeIDs: string[],
   placesService: google.maps.places.PlacesService | null,
 ) => {
-  const places: MapBoxPlace[] = [];
+  const [places, setPlaces] = useState<MapBoxPlace[]>([]);
+  const tempPlaces = useMemo<MapBoxPlace[]>(() => [], []);
 
-  if (placesService) {
-    placeIDs.forEach((placeID) => {
-      getPlaceByPlaceID(placesService, placeID, (place) => {
-        places.push(place);
+  useEffect(() => {
+    if (placesService) {
+      placeIDs.forEach((placeID) => {
+        getPlaceByPlaceID(placesService, placeID, (place) => {
+          tempPlaces.push(place);
+
+          if (tempPlaces.length === placeIDs.length) {
+            setPlaces([...tempPlaces]);
+          }
+        });
       });
-    });
-  }
+    }
+  }, [tempPlaces, placeIDs, placesService]);
 
   return places;
 };
