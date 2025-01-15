@@ -1,7 +1,6 @@
 import { useRef, useEffect, useState } from "react";
-import { invariant } from "@tanstack/react-router";
 import { MapBoxPlace } from "./types";
-import { getPlacePhotoURL } from "./util";
+import { validateAndCachePlace } from "./util";
 
 interface Props {
   map: google.maps.Map | null;
@@ -46,33 +45,12 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
     if (!placeAutocomplete) return;
 
     placeAutocomplete.addListener("place_changed", () => {
-      // FIXME: cache somehow?
       const place = placeAutocomplete.getPlace();
-      const placeID = place.place_id;
-      const name = place.name;
-      const address = place.formatted_address;
-      const lat = place.geometry?.location?.lat();
-      const lng = place.geometry?.location?.lng();
-      const rating = place.rating;
-      const numRatings = place.user_ratings_total;
-      const photoURL = getPlacePhotoURL(place.photos);
-      invariant(placeID, "placeID must have a value");
-      invariant(lat, "lat must have a value");
-      invariant(lng, "lng must have a value");
-
-      onPlaceSelect({
-        placeID,
-        name,
-        address,
-        lat,
-        lng,
-        rating,
-        numRatings,
-        photoURL,
-      });
+      onPlaceSelect(validateAndCachePlace(place));
     });
   }, [onPlaceSelect, placeAutocomplete]);
 
+  // when map bounds change, ensure autocomplete maintains relevant local results
   map?.addListener("bounds_changed", () => {
     placeAutocomplete?.setBounds(map.getBounds());
   });

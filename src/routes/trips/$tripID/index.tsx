@@ -75,7 +75,8 @@ function TripComponent() {
           });
         });
       };
-      // FIXME: clean this
+
+      // FIXME: clean this into hook somehow pls
       loadPlaces(
         [...new Set(favorites?.map(({ place_id }) => place_id))],
         setFavoritePlaces,

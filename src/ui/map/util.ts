@@ -4,11 +4,41 @@ import { MapBoxPlace } from "./types";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 
 // FIXME: validate cache on put/get, set size limit on cache
-const cache = {
+const placesCache = {
   get: (key: string) => localStorage.getItem(key),
   put: (key: string, value: MapBoxPlace) =>
     localStorage.setItem(key, JSON.stringify(value)),
   del: (key: string) => localStorage.removeItem(key),
+};
+
+export const validateAndCachePlace = (
+  place: google.maps.places.PlaceResult,
+) => {
+  const placeID = place.place_id;
+  const lat = place.geometry?.location?.lat();
+  const lng = place.geometry?.location?.lng();
+  const name = place.name;
+  const address = place.formatted_address;
+  const rating = place.rating;
+  const numRatings = place.user_ratings_total;
+  const photoURL = getPlacePhotoURL(place.photos);
+  invariant(placeID, "placeID must have a value");
+  invariant(lat, "lat must have a value");
+  invariant(lng, "lng must have a value");
+
+  const placeObject = {
+    placeID,
+    lat,
+    lng,
+    name,
+    address,
+    rating,
+    numRatings,
+    photoURL,
+  };
+
+  placesCache.put(placeID, placeObject);
+  return placeObject;
 };
 
 export const getPlaceByPlaceID = (
@@ -16,7 +46,7 @@ export const getPlaceByPlaceID = (
   placeID: string,
   callback: (place: MapBoxPlace) => void,
 ) => {
-  const cachedPlace = cache.get(placeID);
+  const cachedPlace = placesCache.get(placeID);
 
   if (cachedPlace) {
     return callback(JSON.parse(cachedPlace));
@@ -37,28 +67,7 @@ export const getPlaceByPlaceID = (
     (place) => {
       // FIXME: check status on this
       if (place) {
-        const lat = place.geometry?.location?.lat();
-        const lng = place.geometry?.location?.lng();
-        const name = place.name;
-        const address = place.formatted_address;
-        const rating = place.rating;
-        const numRatings = place.user_ratings_total;
-        const photoURL = getPlacePhotoURL(place.photos);
-        invariant(lat && lng, "place must have a latitude, longitude");
-
-        const placeObject = {
-          placeID,
-          lat,
-          lng,
-          name,
-          address,
-          rating,
-          numRatings,
-          photoURL,
-        };
-
-        cache.put(placeID, placeObject);
-        callback(placeObject);
+        callback(validateAndCachePlace(place));
       }
     },
   );
@@ -70,7 +79,7 @@ export const getPlacePhotoURL = (
   const photoURL =
     photos && photos.length > 0
       ? photos[0].getUrl({ maxWidth: 300, maxHeight: 300 })
-      : "/public/images/no-maps-image.jpg"; // FIXME: why is this loading image?
+      : "/public/images/no-maps-image.jpg";
 
   return photoURL;
 };
@@ -82,7 +91,6 @@ export const useMapUtils = () => {
     useState<google.maps.places.PlacesService | null>(null);
 
   // initialize the PlacesService after places, map libraries load
-  // FIXME: extract this into a hook (in general, look at all uses of useState/useEffect) SOME SHIT IS SLOW
   useEffect(() => {
     if (places && map) {
       setPlacesService(new places.PlacesService(map));
