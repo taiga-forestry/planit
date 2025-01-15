@@ -65,12 +65,13 @@ function TripComponent() {
         const places: MapBoxPlace[] = [];
 
         if (placeIDs.length === 0) {
-          return setFavoritePlaces([]);
+          setFavoritePlaces([]);
         }
 
         placeIDs.forEach((placeID) => {
           getPlaceByPlaceID(placesService, placeID, (place) => {
             places.push(place);
+
             if (places.length === placeIDs.length) {
               setPlaces(places);
             }
