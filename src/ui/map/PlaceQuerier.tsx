@@ -25,6 +25,7 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
         "formatted_address",
         "rating",
         "user_ratings_total",
+        "photos",
         // "price_level",
         // "types",
         // "website",
@@ -45,6 +46,7 @@ export function PlaceQuerier({ map, places, onPlaceSelect }: Props) {
     if (!placeAutocomplete) return;
 
     placeAutocomplete.addListener("place_changed", () => {
+      // FIXME: cache somehow?
       const place = placeAutocomplete.getPlace();
       const placeID = place.place_id;
       const name = place.name;
